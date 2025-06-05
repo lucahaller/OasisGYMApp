@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
-import { pool } from "../db";
+import * as userService from "../services/userService";
 
-export const getUsers = async (req: Request, res: Response) => {
-  try {
-    const result = await pool.query("SELECT * FROM users");
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: "Error al obtener usuarios" });
-  }
+export const getAllUsers = async (_req: Request, res: Response) => {
+  const users = await userService.getAll();
+  res.json(users);
+};
+
+export const createUser = async (req: Request, res: Response) => {
+  const { name, email, password } = req.body;
+  const newUser = await userService.create({ name, email, password });
+  res.status(201).json(newUser);
 };
