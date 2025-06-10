@@ -2,7 +2,8 @@
 import { Router } from "express";
 import { authenticateToken } from "../middleware/authMiddleware";
 import { authorizeRole } from "../middleware/authMiddlewareRole";
-
+import { asyncHandler } from "../utils/asycHandler";
+import * as userController from "../controllers/usersController";
 const router = Router();
 
 router.get(
@@ -17,4 +18,10 @@ router.get(
   }
 );
 
+router.delete(
+  "/:id",
+  authenticateToken,
+  authorizeRole("ADMIN"),
+  asyncHandler(userController.deleteUser)
+);
 export default router;

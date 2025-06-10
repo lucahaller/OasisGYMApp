@@ -1,9 +1,10 @@
 // src/routes/user.routes.ts
 import { Router } from "express";
+import { asyncHandler } from "../utils/asycHandler";
 import * as userController from "../controllers/usersController";
 import { authenticateToken } from "../middleware/authMiddleware";
 import { authorizeRole } from "../middleware/authMiddlewareRole";
-import { asyncHandler } from "../utils/asycHandler";
+
 const router = Router();
 
 router.get(
@@ -31,4 +32,5 @@ router.delete(
   authorizeRole("ADMIN"),
   asyncHandler(userController.deleteUser)
 );
+
 export default router;
