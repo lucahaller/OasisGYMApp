@@ -4,16 +4,26 @@ import userRoutes from "./routes/usersRoutes";
 import authRoutes from "./routes/authRoutes";
 import cors from "cors";
 import dotenv from "dotenv";
+import { createDefaultAdmin } from "./utils/initAdmin";
+
 dotenv.config();
+
 const app = express();
 app.use(cors());
-
 app.use(express.json());
 
 app.use("/users", userRoutes);
 app.use("/api/auth", authRoutes);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+
+const main = async () => {
+  await createDefaultAdmin(); // ✅ Esperar a que se cree el admin
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+};
+
+main().catch((error) => {
+  console.error("Error al iniciar la app:", error);
 });
