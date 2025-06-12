@@ -25,7 +25,7 @@ export const login = (email, password) => async (dispatch) => {
 
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
-
+    console.log("lOGGEADO PERRI");
     dispatch(authSuccess(token, user));
   } catch (error) {
     dispatch(authFail(error.response?.data?.message || "Error en login"));

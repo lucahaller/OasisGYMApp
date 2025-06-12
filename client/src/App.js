@@ -1,13 +1,9 @@
-import logo from "./logo.svg";
-import "./App.css";
-import Landing from "./pages/register&landing/Landing";
+import AppRoutes from "./routes/AppRoutes";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <Landing />
-      </header>
+    <div>
+      <AppRoutes />
     </div>
   );
 }

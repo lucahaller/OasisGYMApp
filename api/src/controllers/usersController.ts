@@ -28,3 +28,21 @@ export const deleteUser = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error al eliminar el usuario." });
   }
 };
+
+export const getProfile = async (req: Request, res: Response) => {
+  const userId = (req as any).user.id;
+  try {
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+    const { password, ...userWithoutPassword } = user;
+    res.status(200).json({ user: userWithoutPassword });
+  } catch (error) {
+    console.error("Error al obtener perfil:", error);
+    res.status(500).json({ message: "Error al obtener perfil" });
+  }
+};

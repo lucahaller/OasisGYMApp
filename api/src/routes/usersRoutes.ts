@@ -18,13 +18,7 @@ router.get(
   "/profile",
   authenticateToken,
   authorizeRole("USER"),
-  async (req, res) => {
-    const user = (req as any).user;
-    res.json({
-      message: "Perfil del usuario logueado",
-      user,
-    });
-  }
+  userController.getProfile
 );
 router.delete(
   "/:id",
