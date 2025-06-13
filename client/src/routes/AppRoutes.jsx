@@ -6,6 +6,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Landing from "../pages/register&landing/Landing";
 import MainProfile from "../pages/profile/mainProfile";
 import RegisterLogin from "../pages/register&landing/RegisterLogin";
+import MainAdmin from "../pages/admin/mainAdmin";
 
 // import NotFound from "../pages/NotFound";
 // import PrivateRoute from "./PrivateRoute"; // si querés rutas protegidas
@@ -17,6 +18,7 @@ const AppRoutes = () => {
       <Route path="/login" element={<Landing />} />
       <Route path="/register" element={<Landing />} />
       <Route path="/profile" element={<MainProfile />} />
+      <Route path="/dashboard" element={<MainAdmin />} />
     </Routes>
   );
 };
