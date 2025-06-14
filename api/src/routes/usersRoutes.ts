@@ -17,7 +17,7 @@ router.post("/", userController.createUser);
 router.get(
   "/profile",
   authenticateToken,
-  authorizeRole("USER"),
+  authorizeRole("USER", "ADMIN"),
   userController.getProfile
 );
 router.put(

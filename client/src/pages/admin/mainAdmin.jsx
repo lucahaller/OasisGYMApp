@@ -1,10 +1,12 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import UserDashboard from "./userDashboard";
 
 export default function MainAdmin() {
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState(null);
-
+  const [users, setUsers] = useState(null);
+  const [showUser, setShowUser] = useState(false);
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -24,6 +26,18 @@ export default function MainAdmin() {
         console.error("Error al obtener perfil:", err);
         setError("No se pudo cargar el perfil.");
       });
+
+    axios
+      .get("http://localhost:3000/users/", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => setUsers(res.data))
+      .catch((err) => {
+        console.error("Error al obtener perfil:", err);
+        setError("No se pudo cargar el perfil.");
+      });
   }, []);
 
   if (error)
@@ -32,7 +46,7 @@ export default function MainAdmin() {
     return <div className="text-center mt-10">Cargando perfil...</div>;
   const user = profile.user;
 
-  console.log(profile);
+  console.log(users);
 
   return (
     <div>
@@ -206,6 +220,61 @@ export default function MainAdmin() {
               </button>
             </div>
           </div>
+          {!showUser ? (
+            <div className="p-6">
+              <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+                Usuarios Registrados
+              </h2>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white rounded-xl shadow">
+                  <thead>
+                    <tr className="bg-sky-600 text-white text-left text-sm uppercase font-semibold">
+                      <th className="py-3 px-4">Nombre</th>
+                      <th className="py-3 px-4">Email</th>
+                      <th className="py-3 px-4">Edad</th>
+                      <th className="py-3 px-4">Altura</th>
+                      <th className="py-3 px-4">Peso</th>
+                      <th className="py-3 px-4">Pago</th>
+                      <th className="py-3 px-4 text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users?.map((user) => (
+                      <tr key={user.id} className="border-b hover:bg-gray-100">
+                        <td className="py-3 px-4">{user.name}</td>
+                        <td className="py-3 px-4">{user.email}</td>
+                        <td className="py-3 px-4">{user.age || "-"}</td>
+                        <td className="py-3 px-4">
+                          {user.height ? `${user.height} cm` : "-"}
+                        </td>
+                        <td className="py-3 px-4">
+                          {user.weight ? `${user.weight} kg` : "-"}
+                        </td>
+                        <td className="py-3 px-4">
+                          {user.paymentDate
+                            ? new Date(user.paymentDate).toLocaleDateString(
+                                "es-AR"
+                              )
+                            : "Sin pago"}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            onClick={() => setShowUser(true)}
+                            className="bg-cyan-500 hover:bg-cyan-600 text-white text-sm px-3 py-1 rounded"
+                          >
+                            Ver más
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <UserDashboard />
+          )}
         </div>
       </div>
     </div>
