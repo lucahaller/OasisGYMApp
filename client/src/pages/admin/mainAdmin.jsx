@@ -7,6 +7,8 @@ export default function MainAdmin() {
   const [error, setError] = useState(null);
   const [users, setUsers] = useState(null);
   const [showUser, setShowUser] = useState(false);
+  const [user, setUser] = useState(null);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -39,12 +41,36 @@ export default function MainAdmin() {
         setError("No se pudo cargar el perfil.");
       });
   }, []);
+  const handleFetch = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`http://localhost:3000/users/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text(); // <- Esto te da el HTML que causó el error
+        throw new Error(
+          `Error en la respuesta: ${response.status} - ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+      setUser(data);
+      setShowUser(true);
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    }
+  };
 
   if (error)
     return <div className="text-red-600 text-center mt-10">{error}</div>;
   if (!profile)
     return <div className="text-center mt-10">Cargando perfil...</div>;
-  const user = profile.user;
 
   console.log(users);
 
@@ -260,7 +286,7 @@ export default function MainAdmin() {
                         </td>
                         <td className="py-3 px-4 text-center">
                           <button
-                            onClick={() => setShowUser(true)}
+                            onClick={(e) => handleFetch(user?.id)}
                             className="bg-cyan-500 hover:bg-cyan-600 text-white text-sm px-3 py-1 rounded"
                           >
                             Ver más
@@ -273,7 +299,7 @@ export default function MainAdmin() {
               </div>
             </div>
           ) : (
-            <UserDashboard />
+            <UserDashboard data={user} goBack={() => setShowUser(false)} />
           )}
         </div>
       </div>

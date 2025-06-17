@@ -26,6 +26,12 @@ router.put(
   authorizeRole("USER"),
   userController.updateProfile
 );
+router.get(
+  "/:id",
+  authenticateToken,
+  authorizeRole("ADMIN"),
+  userController.getUserById
+);
 router.delete(
   "/:id",
   authenticateToken,
