@@ -67,6 +67,11 @@ export const login = async (req: Request, res: Response) => {
   }
 
   const user = await prisma.users.findUnique({ where: { email } });
+  if (user?.payment_expiration && new Date() > user.payment_expiration) {
+    return res
+      .status(403)
+      .json({ message: "Cuenta inactiva por falta de pago" });
+  }
   if (!user) return res.status(401).json({ message: "Credenciales inválidas" });
 
   const match = await bcrypt.compare(password, user.password);
