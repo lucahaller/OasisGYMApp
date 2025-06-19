@@ -39,4 +39,10 @@ router.delete(
   asyncHandler(userController.deleteUser)
 );
 
+router.put(
+  "/pay/:id",
+  authenticateToken,
+  authorizeRole("ADMIN"),
+  asyncHandler(userController.creditUserPayment)
+);
 export default router;

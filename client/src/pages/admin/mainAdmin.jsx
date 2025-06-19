@@ -2,6 +2,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import UserDashboard from "./userDashboard";
 import LogOutButton from "../../components/LogOutButton";
+import { useNavigate } from "react-router-dom";
 
 export default function MainAdmin() {
   const [profile, setProfile] = useState(null);
@@ -9,6 +10,7 @@ export default function MainAdmin() {
   const [users, setUsers] = useState(null);
   const [showUser, setShowUser] = useState(false);
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -42,31 +44,6 @@ export default function MainAdmin() {
         setError("No se pudo cargar el perfil.");
       });
   }, []);
-  const handleFetch = async (id) => {
-    try {
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(`http://localhost:3000/users/${id}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text(); // <- Esto te da el HTML que causó el error
-        throw new Error(
-          `Error en la respuesta: ${response.status} - ${errorText}`
-        );
-      }
-
-      const data = await response.json();
-      setUser(data);
-      setShowUser(true);
-    } catch (error) {
-      console.error("Error fetching user details:", error);
-    }
-  };
 
   if (error)
     return <div className="text-red-600 text-center mt-10">{error}</div>;
@@ -271,7 +248,9 @@ export default function MainAdmin() {
                         </td>
                         <td className="py-3 px-4 text-center">
                           <button
-                            onClick={(e) => handleFetch(user?.id)}
+                            onClick={() =>
+                              navigate(`/dashboard/users/${user.id}`)
+                            }
                             className="bg-cyan-500 hover:bg-cyan-600 text-white text-sm px-3 py-1 rounded"
                           >
                             Ver más
@@ -284,7 +263,7 @@ export default function MainAdmin() {
               </div>
             </div>
           ) : (
-            <UserDashboard data={user} goBack={() => setShowUser(false)} />
+            <UserDashboard data={user} goBack={() => navigate("/dashboard")} />
           )}
         </div>
       </div>
