@@ -1,21 +1,106 @@
+import { format } from "date-fns";
+import { useState } from "react";
 import axios from "axios";
-import { useEffect, useState } from "react";
 
 export default function UserDashboard({ data, goBack }) {
-  const [profile, setProfile] = useState(null);
-  const [formData, setFormData] = useState({ age: "", height: "", weight: "" });
-  const [editing, setEditing] = useState(false);
+  const [notes, setNotes] = useState(data.notes || "");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  useEffect(() => {}, [data]);
+  const handleNotesUpdate = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.put(
+        `http://localhost:3000/users/update-notes/${data.id}`,
+        { notes },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setMessage("Notas actualizadas con éxito");
+      setError("");
+    } catch (err) {
+      setMessage("");
+      setError("Error al actualizar notas");
+    }
+  };
 
   return (
-    <div className="p-6">
-      <button onClick={goBack} className="text-blue-500 mb-4 underline">
-        ← Volver
+    <div className="p-8 bg-white  w-full mx-auto">
+      <button
+        onClick={goBack}
+        className="text-cyan-600 hover:underline mb-6 text-sm"
+      >
+        ← Volver al listado
       </button>
-      <div className="text-2xl text-black"> {data?.name}</div>
+
+      <h2 className="text-3xl font-bold text-gray-800 mb-4">{data.name}</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700">
+        <div>
+          <p>
+            <span className="font-semibold">Email:</span> {data.email}
+          </p>
+          <p>
+            <span className="font-semibold">Edad:</span> {data.age ?? "-"}
+          </p>
+          <p>
+            <span className="font-semibold">Altura:</span>{" "}
+            {data.height ? `${data.height} cm` : "-"}
+          </p>
+          <p>
+            <span className="font-semibold">Peso:</span>{" "}
+            {data.weight ? `${data.weight} kg` : "-"}
+          </p>
+        </div>
+
+        <div>
+          <p>
+            <span className="font-semibold">Ingreso al gimnasio:</span>{" "}
+            {format(new Date(data.created_at), "dd/MM/yyyy")}
+          </p>
+          <p>
+            <span className="font-semibold">Último pago:</span>{" "}
+            {data.last_payment
+              ? format(new Date(data.last_payment), "dd/MM/yyyy")
+              : "Sin pago registrado"}
+          </p>
+          <p>
+            <span className="font-semibold">Monto pagado:</span>{" "}
+            {data.payment_amount ? `$${data.payment_amount}` : "-"}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <label className="block text-gray-800 font-semibold mb-2">
+          Notas del usuario
+        </label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={4}
+          className="w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          placeholder="Notas adicionales..."
+        />
+        <button
+          onClick={handleNotesUpdate}
+          className="mt-3 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded"
+        >
+          Guardar notas
+        </button>
+        {message && <p className="text-green-600 mt-2 text-sm">{message}</p>}
+        {error && <p className="text-red-600 mt-2 text-sm">{error}</p>}
+      </div>
+
+      <div className="mt-8">
+        <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+          Acreditar nuevo pago
+        </button>
+        {/* Este botón podría abrir un modal para cargar pago */}
+      </div>
     </div>
   );
 }
