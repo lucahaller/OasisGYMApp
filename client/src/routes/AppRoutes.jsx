@@ -7,6 +7,8 @@ import RegisterLogin from "../pages/register&landing/RegisterLogin";
 import MainAdmin from "../pages/admin/mainAdmin";
 import LoginGuard from "../middleware/LoginGuard";
 import AuthGuard from "../middleware/AuthGuard";
+import UserDashboard from "../pages/admin/userDashboard";
+import UserDetailPage from "../pages/admin/UserDetailPage";
 
 // Protección de rutas
 
@@ -53,6 +55,14 @@ const AppRoutes = () => {
         element={
           <AuthGuard roleAllowed={["ADMIN"]}>
             <MainAdmin />
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/dashboard/users/:id"
+        element={
+          <AuthGuard roleAllowed={["ADMIN"]}>
+            <UserDetailPage />
           </AuthGuard>
         }
       />

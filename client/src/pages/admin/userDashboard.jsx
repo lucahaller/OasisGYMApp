@@ -1,12 +1,13 @@
 import { format } from "date-fns";
 import { useState } from "react";
 import axios from "axios";
+import PaymentModal from "../../components/PaymentModal";
 
 export default function UserDashboard({ data, goBack }) {
   const [notes, setNotes] = useState(data.notes || "");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
+  const [showModal, setShowModal] = useState(false);
   const handleNotesUpdate = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -28,7 +29,16 @@ export default function UserDashboard({ data, goBack }) {
   };
 
   return (
-    <div className="p-8 bg-white  w-full mx-auto">
+    <div className="p-20 bg-white  w-full mx-auto">
+      {showModal && (
+        <PaymentModal
+          userId={data.id}
+          onClose={() => setShowModal(false)}
+          onSuccess={() => {
+            window.location.reload();
+          }}
+        />
+      )}
       <button
         onClick={goBack}
         className="text-cyan-600 hover:underline mb-6 text-sm"
@@ -38,7 +48,7 @@ export default function UserDashboard({ data, goBack }) {
 
       <h2 className="text-3xl font-bold text-gray-800 mb-4">{data.name}</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-gray-700">
         <div>
           <p>
             <span className="font-semibold">Email:</span> {data.email}
@@ -49,6 +59,10 @@ export default function UserDashboard({ data, goBack }) {
           <p>
             <span className="font-semibold">Altura:</span>{" "}
             {data.height ? `${data.height} cm` : "-"}
+          </p>
+          <p>
+            <span className="font-semibold">Lesión:</span>{" "}
+            {data.injury ? `${data.injury} cm` : "Sin Lesiones"}
           </p>
           <p>
             <span className="font-semibold">Peso:</span>{" "}
@@ -71,6 +85,20 @@ export default function UserDashboard({ data, goBack }) {
             <span className="font-semibold">Monto pagado:</span>{" "}
             {data.payment_amount ? `$${data.payment_amount}` : "-"}
           </p>
+          {data.last_payment && (
+            <p className="text-green-400 font-semibold">
+              <span className="">Pago Válido hasta:</span>{" "}
+              {format(new Date(data.payment_expiration), "dd/MM/yyyy")}
+            </p>
+          )}
+        </div>
+        <div className="">
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+          >
+            Acreditar nuevo pago
+          </button>
         </div>
       </div>
 
@@ -93,13 +121,6 @@ export default function UserDashboard({ data, goBack }) {
         </button>
         {message && <p className="text-green-600 mt-2 text-sm">{message}</p>}
         {error && <p className="text-red-600 mt-2 text-sm">{error}</p>}
-      </div>
-
-      <div className="mt-8">
-        <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-          Acreditar nuevo pago
-        </button>
-        {/* Este botón podría abrir un modal para cargar pago */}
       </div>
     </div>
   );

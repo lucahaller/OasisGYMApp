@@ -77,9 +77,38 @@ export const updateProfile = async (req: Request, res: Response) => {
     });
 
     const { password, ...userWithoutPassword } = updatedUser;
-    return res.status(200).json({ user: userWithoutPassword });
+    res.status(200).json({ user: userWithoutPassword });
   } catch (error) {
     console.error("Error al actualizar perfil:", error);
     return res.status(500).json({ message: "Error al actualizar perfil" });
+  }
+};
+
+export const creditUserPayment = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { months, amount } = req.body;
+
+  if (!months || isNaN(months) || !amount || isNaN(amount)) {
+    return res.status(400).json({ message: "Meses o monto inválidos" });
+  }
+
+  try {
+    const lastPayment = new Date();
+    const expiration = new Date(lastPayment);
+    expiration.setMonth(expiration.getMonth() + Number(months));
+
+    await prisma.users.update({
+      where: { id: parseInt(id) },
+      data: {
+        last_payment: lastPayment,
+        payment_expiration: expiration,
+        payment_amount: parseFloat(amount),
+      },
+    });
+
+    res.status(200).json({ message: "Pago acreditado correctamente" });
+  } catch (error) {
+    console.error("Error al acreditar pago:", error);
+    res.status(500).json({ message: "Error al acreditar pago" });
   }
 };
