@@ -2,12 +2,14 @@ import { format } from "date-fns";
 import { useState } from "react";
 import axios from "axios";
 import PaymentModal from "../../components/PaymentModal";
+import DeleteModal from "../../components/DeleteModal";
 
 export default function UserDashboard({ data, goBack }) {
   const [notes, setNotes] = useState(data.notes || "");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showModalDelete, setShowModalDelete] = useState(false);
   const handleNotesUpdate = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -34,6 +36,15 @@ export default function UserDashboard({ data, goBack }) {
         <PaymentModal
           userId={data.id}
           onClose={() => setShowModal(false)}
+          onSuccess={() => {
+            window.location.reload();
+          }}
+        />
+      )}
+      {showModalDelete && (
+        <DeleteModal
+          userId={data.id}
+          onClose={() => setShowModalDelete(false)}
           onSuccess={() => {
             window.location.reload();
           }}
@@ -92,12 +103,18 @@ export default function UserDashboard({ data, goBack }) {
             </p>
           )}
         </div>
-        <div className="">
+        <div className=" flex flex-col gap-10 w-fit">
           <button
             onClick={() => setShowModal(true)}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
           >
             Acreditar nuevo pago
+          </button>
+          <button
+            onClick={() => setShowModalDelete(true)}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+          >
+            Eliminar usuario
           </button>
         </div>
       </div>
