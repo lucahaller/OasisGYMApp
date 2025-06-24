@@ -4,6 +4,7 @@ import { prisma } from "../prisma/client";
 
 export const getAllUsers = async (_req: Request, res: Response) => {
   const users = await userService.getAll();
+
   res.json(users);
 };
 
@@ -63,12 +64,12 @@ export const getUserById = async (req: Request, res: Response) => {
 };
 
 export const updateProfile = async (req: Request, res: Response) => {
-  const userId = (req as any).user.id;
+  const id = Number(req.params.id);
   const { age, height, weight, notes, injury } = req.body;
 
   try {
     const updatedUser = await prisma.users.update({
-      where: { id: userId },
+      where: { id: id },
       data: {
         age: age !== undefined ? Number(age) : undefined,
         height: height !== undefined ? Number(height) : undefined,

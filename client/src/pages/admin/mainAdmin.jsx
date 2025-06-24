@@ -240,8 +240,8 @@ export default function MainAdmin() {
                           {user.weight ? `${user.weight} kg` : "-"}
                         </td>
                         <td className="py-3 px-4">
-                          {user.paymentDate
-                            ? new Date(user.paymentDate).toLocaleDateString(
+                          {user.last_payment
+                            ? new Date(user.last_payment).toLocaleDateString(
                                 "es-AR"
                               )
                             : "Sin pago"}
