@@ -64,15 +64,17 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const updateProfile = async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
-  const { age, height, weight } = req.body;
+  const { age, height, weight, notes, injury } = req.body;
 
   try {
     const updatedUser = await prisma.users.update({
       where: { id: userId },
       data: {
-        age: Number(age),
-        height: Number(height),
-        weight: Number(weight),
+        age: age !== undefined ? Number(age) : undefined,
+        height: height !== undefined ? Number(height) : undefined,
+        weight: weight !== undefined ? Number(weight) : undefined,
+        notes: notes !== undefined ? notes : undefined,
+        injury: injury !== undefined ? injury : undefined,
       },
     });
 
