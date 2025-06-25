@@ -17,8 +17,7 @@ model users {
   id             Int       @id @default(autoincrement())
   name           String    @db.VarChar(100)
   email          String    @unique @db.VarChar(100)
-  password       String    @db.VarChar(255)
-  role           Role      @default(USER)  // rol del usuario, por defecto USER
+  role           Role      @default(USER)  
   weight         Float?    
   height         Float?    
   age            Int?      

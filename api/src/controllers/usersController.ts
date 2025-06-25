@@ -9,9 +9,27 @@ export const getAllUsers = async (_req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  const { name, email, password } = req.body;
-  const newUser = await userService.create({ name, email, password });
-  res.status(201).json(newUser);
+  const { name, email, age, height, weight, notes, injury } = req.body;
+
+  try {
+    const user = await prisma.users.create({
+      data: {
+        name,
+        email,
+        age: age ? Number(age) : undefined,
+        height: height ? Number(height) : undefined,
+        weight: weight ? Number(weight) : undefined,
+        notes,
+        injury,
+      },
+    });
+
+    const { password, ...userWithoutPassword } = user;
+    res.status(201).json({ user: userWithoutPassword });
+  } catch (error) {
+    console.error("Error al crear usuario:", error);
+    res.status(500).json({ message: "Error al crear usuario" });
+  }
 };
 
 export const deleteUser = async (req: Request, res: Response) => {

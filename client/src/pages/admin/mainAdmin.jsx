@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import UserDashboard from "./userDashboard";
 import LogOutButton from "../../components/LogOutButton";
 import { useNavigate } from "react-router-dom";
+import RegisterModal from "../../components/RegisterModal";
 
 export default function MainAdmin() {
   const [profile, setProfile] = useState(null);
@@ -11,6 +12,20 @@ export default function MainAdmin() {
   const [showUser, setShowUser] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleRegister = async (formData) => {
+    try {
+      await axios.post("http://localhost:3000/users", formData); // Ruta de tu backend
+      alert("Usuario registrado");
+      // Recargar usuarios
+      const res = await axios.get("http://localhost:3000/users");
+      setUsers(res.data);
+    } catch (err) {
+      console.error("Error al registrar usuario:", err);
+      alert("Error al registrar usuario");
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -210,9 +225,17 @@ export default function MainAdmin() {
           </div>
           {!showUser ? (
             <div className="p-6">
-              <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-                Usuarios Registrados
-              </h2>
+              <div className="flex justify-between items-center p-6">
+                <h2 className="text-2xl font-semibold text-gray-700">
+                  Usuarios Registrados
+                </h2>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                >
+                  Registrar Usuario
+                </button>
+              </div>
 
               <div className="overflow-x-auto">
                 <table className="min-w-full bg-white rounded-xl shadow">
@@ -267,6 +290,11 @@ export default function MainAdmin() {
           )}
         </div>
       </div>
+      <RegisterModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onRegister={handleRegister}
+      />
     </div>
   );
 }

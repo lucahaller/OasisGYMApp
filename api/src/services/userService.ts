@@ -4,7 +4,14 @@ import { prisma } from "../prisma/client";
 type NewUser = {
   name: string;
   email: string;
-  password: string;
+  weight?: number;
+  height?: number;
+  age?: number;
+  injury?: string;
+  notes?: string;
+  last_payment?: Date;
+  payment_expiration?: Date;
+  payment_amount?: number;
 };
 
 export const create = async (
