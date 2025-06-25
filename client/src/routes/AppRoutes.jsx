@@ -1,5 +1,5 @@
 // src/routes/AppRoutes.jsx
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import Landing from "../pages/register&landing/Landing";
 import MainProfile from "../pages/profile/mainProfile";
@@ -11,61 +11,13 @@ import UserDashboard from "../pages/admin/userDashboard";
 import UserDetailPage from "../pages/admin/UserDetailPage";
 
 // Protección de rutas
-
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Landing / Login / Register accesibles solo si NO está logueado */}
-      <Route
-        path="/"
-        element={
-          <LoginGuard>
-            <Landing />
-          </LoginGuard>
-        }
-      />
-      <Route
-        path="/login"
-        element={
-          <LoginGuard>
-            <Landing />
-          </LoginGuard>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <LoginGuard>
-            <Landing />
-          </LoginGuard>
-        }
-      />
-
-      {/* Rutas protegidas */}
-      <Route
-        path="/profile"
-        element={
-          <AuthGuard roleAllowed={["USER", "ADMIN"]}>
-            <MainProfile />
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <AuthGuard roleAllowed={["ADMIN"]}>
-            <MainAdmin />
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/dashboard/users/:id"
-        element={
-          <AuthGuard roleAllowed={["ADMIN"]}>
-            <UserDetailPage />
-          </AuthGuard>
-        }
-      />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/profile" element={<MainProfile />} />
+      <Route path="/dashboard" element={<MainAdmin />} />
+      <Route path="/dashboard/users/:id" element={<UserDetailPage />} />
     </Routes>
   );
 };

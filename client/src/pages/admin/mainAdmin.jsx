@@ -13,17 +13,24 @@ export default function MainAdmin() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async (formData) => {
+    if (loading) return; // evita doble envío
+    setLoading(true);
     try {
       await axios.post("http://localhost:3000/users", formData); // Ruta de tu backend
       alert("Usuario registrado");
       // Recargar usuarios
       const res = await axios.get("http://localhost:3000/users");
       setUsers(res.data);
-    } catch (err) {
-      console.error("Error al registrar usuario:", err);
-      alert("Error al registrar usuario");
+    } catch (error) {
+      alert(
+        "Error al crear usuario: " +
+          (error.response?.data?.message || error.message)
+      );
+    } finally {
+      setLoading(false);
     }
   };
 

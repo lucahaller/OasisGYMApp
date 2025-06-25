@@ -8,8 +8,7 @@ const router = Router();
 
 router.get(
   "/dashboard",
-  authenticateToken,
-  authorizeRole("ADMIN"),
+
   (req, res) => {
     res.json({
       message: "Bienvenido al panel de administrador",
@@ -20,8 +19,7 @@ router.get(
 
 router.delete(
   "/:id",
-  authenticateToken,
-  authorizeRole("ADMIN"),
+
   asyncHandler(userController.deleteUser)
 );
 export default router;
