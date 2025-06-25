@@ -5,33 +5,49 @@ import PaymentModal from "../../components/PaymentModal";
 import DeleteModal from "../../components/DeleteModal";
 
 export default function UserDashboard({ data, goBack }) {
-  const [notes, setNotes] = useState(data.notes || "");
+  const [formData, setFormData] = useState({
+    notes: data.notes || "",
+    age: data.age || "",
+    height: data.height || "",
+    weight: data.weight || "",
+    injury: data.injury || "",
+  });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [showModalDelete, setShowModalDelete] = useState(false);
-  const handleNotesUpdate = async () => {
+  const [editing, setEditing] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    console.log(data.id);
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleUserUpdate = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.put(
-        `http://localhost:3000/users/update-notes/${data.id}`,
-        { notes },
+      await axios.put(
+        `http://localhost:3000/users/update/${data.id}`,
+        formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      setMessage("Notas actualizadas con éxito");
+      setMessage("Datos actualizados con éxito");
       setError("");
+      setEditing(false);
+      window.location.reload();
     } catch (err) {
       setMessage("");
-      setError("Error al actualizar notas");
+      setError("Error al actualizar los datos");
     }
   };
-
+  console.log(data);
   return (
-    <div className="p-20 bg-white  w-full mx-auto">
+    <div className="p-20 bg-white w-full mx-auto">
       {showModal && (
         <PaymentModal
           userId={data.id}
@@ -65,19 +81,64 @@ export default function UserDashboard({ data, goBack }) {
             <span className="font-semibold">Email:</span> {data.email}
           </p>
           <p>
-            <span className="font-semibold">Edad:</span> {data.age ?? "-"}
+            <span className="font-semibold">Edad:</span>{" "}
+            {editing ? (
+              <input
+                type="number"
+                name="age"
+                value={formData.age}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-1 mt-1"
+              />
+            ) : (
+              data.age || "Edad no especificada"
+            )}
           </p>
           <p>
             <span className="font-semibold">Altura:</span>{" "}
-            {data.height ? `${data.height} cm` : "-"}
+            {editing ? (
+              <input
+                type="number"
+                name="height"
+                value={formData.height}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-1 mt-1"
+              />
+            ) : data.height ? (
+              `${data.height} cm`
+            ) : (
+              "Altura no especificada"
+            )}
           </p>
           <p>
             <span className="font-semibold">Lesión:</span>{" "}
-            {data.injury ? `${data.injury} cm` : "Sin Lesiones"}
+            {editing ? (
+              <input
+                type="text"
+                name="injury"
+                value={formData.injury}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-1 mt-1"
+              />
+            ) : (
+              data.injury || "Sin lesiones registradas"
+            )}
           </p>
           <p>
             <span className="font-semibold">Peso:</span>{" "}
-            {data.weight ? `${data.weight} kg` : "-"}
+            {editing ? (
+              <input
+                type="number"
+                name="weight"
+                value={formData.weight}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-1 mt-1"
+              />
+            ) : data.weight ? (
+              `${data.weight} kg`
+            ) : (
+              "Peso no especificado"
+            )}
           </p>
         </div>
 
@@ -103,7 +164,8 @@ export default function UserDashboard({ data, goBack }) {
             </p>
           )}
         </div>
-        <div className=" flex flex-col gap-10 w-fit">
+
+        <div className="flex flex-col gap-6 w-fit">
           <button
             onClick={() => setShowModal(true)}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
@@ -123,19 +185,36 @@ export default function UserDashboard({ data, goBack }) {
         <label className="block text-gray-800 font-semibold mb-2">
           Notas del usuario
         </label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={4}
-          className="w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-          placeholder="Notas adicionales..."
-        />
-        <button
-          onClick={handleNotesUpdate}
-          className="mt-3 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded"
-        >
-          Guardar notas
-        </button>
+        {editing ? (
+          <textarea
+            name="notes"
+            value={formData.notes}
+            onChange={handleInputChange}
+            rows={4}
+            className="w-full p-3 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            placeholder="Notas adicionales..."
+          />
+        ) : (
+          <p>{formData.notes || "Sin notas registradas"}</p>
+        )}
+
+        <div className="mt-3 flex gap-4">
+          {editing ? (
+            <button
+              onClick={handleUserUpdate}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded"
+            >
+              Guardar cambios
+            </button>
+          ) : (
+            <button
+              onClick={() => setEditing(true)}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded"
+            >
+              Editar datos
+            </button>
+          )}
+        </div>
         {message && <p className="text-green-600 mt-2 text-sm">{message}</p>}
         {error && <p className="text-red-600 mt-2 text-sm">{error}</p>}
       </div>

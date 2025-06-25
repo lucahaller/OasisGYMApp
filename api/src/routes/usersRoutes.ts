@@ -21,9 +21,9 @@ router.get(
   userController.getProfile
 );
 router.put(
-  "/update",
+  "/update/:id",
   authenticateToken,
-  authorizeRole("USER"),
+  authorizeRole("ADMIN"),
   userController.updateProfile
 );
 router.get(
