@@ -41,7 +41,6 @@ export const getAll = async () => {
       last_payment: true,
       payment_amount: true,
       payment_expiration: true,
-      // ❌ password no se incluye, así que no se devuelve
     },
   });
 };

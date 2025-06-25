@@ -9,23 +9,38 @@ export const getAllUsers = async (_req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  const { name, email, age, height, weight, notes, injury } = req.body;
+  const {
+    name,
+    email,
+    weight,
+    height,
+    age,
+    injury,
+    notes,
+    last_payment,
+    payment_expiration,
+    payment_amount,
+  } = req.body;
 
   try {
     const user = await prisma.users.create({
       data: {
         name,
-        email,
-        age: age ? Number(age) : undefined,
-        height: height ? Number(height) : undefined,
+        email: email ? email : undefined,
         weight: weight ? Number(weight) : undefined,
-        notes,
+        height: height ? Number(height) : undefined,
+        age: age ? Number(age) : undefined,
         injury,
+        notes,
+        last_payment: last_payment ? new Date(last_payment) : undefined,
+        payment_expiration: payment_expiration
+          ? new Date(payment_expiration)
+          : undefined,
+        payment_amount: payment_amount ? Number(payment_amount) : undefined,
       },
     });
 
-    const { password, ...userWithoutPassword } = user;
-    res.status(201).json({ user: userWithoutPassword });
+    res.status(201).json({ user });
   } catch (error) {
     console.error("Error al crear usuario:", error);
     res.status(500).json({ message: "Error al crear usuario" });
@@ -58,8 +73,8 @@ export const getProfile = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
-    const { password, ...userWithoutPassword } = user;
-    res.status(200).json({ user: userWithoutPassword });
+
+    res.status(200).json(user);
   } catch (error) {
     console.error("Error al obtener perfil:", error);
     res.status(500).json({ message: "Error al obtener perfil" });
@@ -97,8 +112,7 @@ export const updateProfile = async (req: Request, res: Response) => {
       },
     });
 
-    const { password, ...userWithoutPassword } = updatedUser;
-    res.status(200).json({ user: userWithoutPassword });
+    res.status(200).json(updatedUser);
   } catch (error) {
     console.error("Error al actualizar perfil:", error);
     return res.status(500).json({ message: "Error al actualizar perfil" });
