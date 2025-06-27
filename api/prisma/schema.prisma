@@ -13,11 +13,13 @@ enum Role {
   ADMIN
 }
 
+
 model users {
   id             Int       @id @default(autoincrement())
   name           String    @db.VarChar(100)
   email          String?    @unique @db.VarChar(100)
-  role           Role      @default(USER)  
+  role           Role      @default(USER) 
+  payment_status String? @default("verde") 
   weight         Float?    
   height         Float?    
   age            Int?      
@@ -27,4 +29,14 @@ model users {
   injury         String?   @db.Text
   payment_amount Float?    
   notes          String?   @db.Text 
+  notifications      notifications[]
+}
+
+model notifications {
+  id        Int      @id @default(autoincrement())
+  message   String   @db.Text
+  date      DateTime @default(now())
+  read      Boolean  @default(false)
+  userId    Int
+  user      users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

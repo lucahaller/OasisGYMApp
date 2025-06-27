@@ -259,7 +259,14 @@ export default function MainAdmin() {
                   </thead>
                   <tbody>
                     {users?.map((user) => (
-                      <tr key={user.id} className="border-b hover:bg-gray-100">
+                      <tr
+                        key={user.id}
+                        className={` ${
+                          user.payment_status === "verde" && "bg-green-500"
+                        } ${user.payment_status === "rojo" && "bg-red-500"} ${
+                          user.payment_status === "amarillo" && "bg-yellow-500"
+                        } border-2 border-gray-500 hover:bg-gray-100 `}
+                      >
                         <td className="py-3 px-4">{user.name}</td>
                         <td className="py-3 px-4">{user.email}</td>
                         <td className="py-3 px-4">{user.age || "-"}</td>

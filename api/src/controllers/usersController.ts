@@ -3,9 +3,13 @@ import * as userService from "../services/userService";
 import { prisma } from "../prisma/client";
 
 export const getAllUsers = async (_req: Request, res: Response) => {
-  const users = await userService.getAll();
-
-  res.json(users);
+  try {
+    const users = await userService.getAll(); // ✅ usa el service
+    res.json(users);
+  } catch (error) {
+    console.error("Error al obtener usuarios:", error);
+    res.status(500).json({ message: "Error al obtener usuarios" });
+  }
 };
 
 export const createUser = async (req: Request, res: Response) => {
@@ -132,12 +136,24 @@ export const creditUserPayment = async (req: Request, res: Response) => {
     const expiration = new Date(lastPayment);
     expiration.setMonth(expiration.getMonth() + Number(months));
 
-    await prisma.users.update({
+    // ✅ Actualizamos el usuario y seteamos estado a "verde"
+    const updatedUser = await prisma.users.update({
       where: { id: parseInt(id) },
       data: {
         last_payment: lastPayment,
         payment_expiration: expiration,
         payment_amount: parseFloat(amount),
+        payment_status: "verde",
+      },
+    });
+
+    // ✅ Creamos la notificación para el usuario
+    await prisma.notifications.create({
+      data: {
+        userId: updatedUser.id,
+        message: `Nuevo pago registrado por $${amount}. Válido hasta ${expiration.toLocaleDateString(
+          "es-AR"
+        )}`,
       },
     });
 
