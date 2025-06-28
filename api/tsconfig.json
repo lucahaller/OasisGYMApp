@@ -5,7 +5,8 @@
     "rootDir": "src",
     "outDir": "dist",
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "types": ["node"] // 👈 ESTA LÍNEA ES CLAVE
   },
   "include": ["src", "env.d.ts"]
 }
