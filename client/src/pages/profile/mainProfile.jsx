@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import LogOutButton from "../../components/LogOutButton";
 
 export default function MainProfile() {
   const [profile, setProfile] = useState(null);
@@ -146,7 +145,7 @@ export default function MainProfile() {
             </div>
           )}
         </div>
-        <LogOutButton />
+
         {message && <div className="text-green-600 mt-4">{message}</div>}
         {error && <div className="text-red-600 mt-4">{error}</div>}
       </div>

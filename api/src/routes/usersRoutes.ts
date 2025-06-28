@@ -37,4 +37,8 @@ router.put(
 
   asyncHandler(userController.creditUserPayment)
 );
+
+router.get("/notifications", userController.getAllNotifications);
+router.post("/notifications", userController.generatePaymentReminders); // obtener todas
+router.patch("/notifications/:id/read", userController.markNotificationAsRead); // marcar como leída
 export default router;

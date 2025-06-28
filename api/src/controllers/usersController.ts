@@ -136,7 +136,6 @@ export const creditUserPayment = async (req: Request, res: Response) => {
     const expiration = new Date(lastPayment);
     expiration.setMonth(expiration.getMonth() + Number(months));
 
-    // ✅ Actualizamos el usuario y seteamos estado a "verde"
     const updatedUser = await prisma.users.update({
       where: { id: parseInt(id) },
       data: {
@@ -147,13 +146,11 @@ export const creditUserPayment = async (req: Request, res: Response) => {
       },
     });
 
-    // ✅ Creamos la notificación para el usuario
+    // 👇 Agregar notificación por nuevo pago
     await prisma.notifications.create({
       data: {
         userId: updatedUser.id,
-        message: `Nuevo pago registrado por $${amount}. Válido hasta ${expiration.toLocaleDateString(
-          "es-AR"
-        )}`,
+        message: `Nuevo pago acreditado para el usuario ${updatedUser.name}`,
       },
     });
 
@@ -161,5 +158,124 @@ export const creditUserPayment = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error al acreditar pago:", error);
     res.status(500).json({ message: "Error al acreditar pago" });
+  }
+};
+// src/controllers/usersController.ts
+
+// src/controllers/usersController.ts
+
+export const getAllNotifications = async (_req: Request, res: Response) => {
+  console.log("🔔  Entered getAllNotifications"); // <-- Este log confirma que se llama a este código
+  try {
+    // 1) Traigo todas las notificaciones sin include
+    const notifications = await prisma.notifications.findMany({
+      orderBy: { date: "desc" },
+    });
+
+    // 2) Traigo solo los usuarios que necesito para el join
+    const users = await prisma.users.findMany({
+      where: { id: { in: notifications.map((n) => n.userId) } },
+      select: { id: true, name: true },
+    });
+
+    // 3) Armo un mapa de userId → nombre
+    const userMap = new Map<number, string>(users.map((u) => [u.id, u.name]));
+
+    // 4) Enriquecer cada notificación con userName
+    const enriched = notifications.map((n) => ({
+      id: n.id,
+      message: n.message,
+      date: n.date,
+      read: n.read,
+      user: {
+        id: n.userId,
+        name: userMap.get(n.userId) ?? "Usuario eliminado",
+      },
+    }));
+
+    return res.json(enriched);
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    console.error(
+      "🔥 Error en getAllNotifications:",
+      error.message,
+      error.stack
+    );
+    return res.status(500).json({
+      message: "Error al buscar las notificaciones",
+      error: error.message,
+    });
+  }
+};
+
+export const markNotificationAsRead = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    await prisma.notifications.update({
+      where: { id: Number(id) },
+      data: { read: true },
+    });
+
+    res.json({ message: "Notificación marcada como leída" });
+  } catch (error) {
+    console.error("Error al marcar notificación como leída:", error);
+    res.status(500).json({ message: "Error al actualizar notificación" });
+  }
+};
+
+export const generatePaymentReminders = async (
+  _req: Request,
+  res: Response
+) => {
+  try {
+    const users = await prisma.users.findMany();
+
+    for (const user of users) {
+      if (!user.payment_expiration) continue; // si no tiene fecha de expiración, saltear
+
+      const today = new Date();
+      const diffTime = user.payment_expiration.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      let message = "";
+      let shouldCreateNotification = false;
+
+      if (diffDays <= 0) {
+        message = `El pago del usuario ${user.name} ha vencido.`;
+        shouldCreateNotification = true;
+      } else if (diffDays <= 5) {
+        message = `El pago del usuario ${user.name} vence en ${diffDays} días.`;
+        shouldCreateNotification = true;
+      } else if (diffDays <= 14) {
+        message = `El pago del usuario ${user.name} vence pronto.`;
+        shouldCreateNotification = true;
+      }
+
+      if (shouldCreateNotification) {
+        // Buscamos si ya existe notificación igual no leída para evitar duplicados
+        const existing = await prisma.notifications.findFirst({
+          where: {
+            userId: user.id,
+            message,
+            read: false,
+          },
+        });
+
+        if (!existing) {
+          await prisma.notifications.create({
+            data: {
+              message,
+              userId: user.id,
+            },
+          });
+        }
+      }
+    }
+
+    res.json({ message: "Recordatorios generados correctamente" });
+  } catch (error) {
+    console.error("Error generando recordatorios:", error);
+    res.status(500).json({ message: "Error generando recordatorios" });
   }
 };

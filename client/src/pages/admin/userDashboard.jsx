@@ -4,7 +4,11 @@ import axios from "axios";
 import PaymentModal from "../../components/PaymentModal";
 import DeleteModal from "../../components/DeleteModal";
 
-export default function UserDashboard({ data, goBack }) {
+export default function UserDashboard({
+  data,
+  goBack,
+  setRefreshNotifications,
+}) {
   const [formData, setFormData] = useState({
     notes: data.notes || "",
     age: data.age || "",
@@ -53,6 +57,10 @@ export default function UserDashboard({ data, goBack }) {
           userId={data.id}
           onClose={() => setShowModal(false)}
           onSuccess={() => {
+            // ✅ Ejecutamos la función que activa el refresco
+            if (typeof setRefreshNotifications === "function") {
+              setRefreshNotifications((prev) => !prev); // cambio de estado = trigger
+            }
             window.location.reload();
           }}
         />
