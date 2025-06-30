@@ -34,6 +34,7 @@ model users {
 
 model notifications {
   id        Int      @id @default(autoincrement())
+  type      String?  @default("general")
   message   String   @db.Text
   date      DateTime @default(now())
   read      Boolean  @default(false)
