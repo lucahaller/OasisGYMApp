@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function NotificationsPanel() {
+export default function NotificationsPanel({ setCount }) {
   const [notifications, setNotifications] = useState([]);
 
   const fetchNotifications = async () => {
@@ -8,16 +8,22 @@ export default function NotificationsPanel() {
       const res = await fetch("http://localhost:3000/users/notifications");
       const data = await res.json();
       setNotifications(Array.isArray(data) ? data : []);
+      setCount(data.length); // 👈 actualizamos el contador
     } catch (err) {
       console.error("Error al cargar notificaciones", err);
     }
   };
+
   const markAsRead = async (id) => {
     try {
       await fetch(`http://localhost:3000/users/notifications/${id}/read`, {
         method: "PATCH",
       });
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      setNotifications((prev) => {
+        const updated = prev.filter((n) => n.id !== id);
+        setCount(updated.length); // 👈 actualizamos después de marcar
+        return updated;
+      });
     } catch (err) {
       console.error("Error al marcar como leída", err);
     }
@@ -43,7 +49,7 @@ export default function NotificationsPanel() {
                 🔔{" "}
                 {n.user?.name ? (
                   <a
-                    href={`/admin/usuario/${n.user.id}`}
+                    href={`/dashboard/users/${n.user.id}`}
                     className="text-blue-600 underline hover:text-blue-800"
                   >
                     {n.message}

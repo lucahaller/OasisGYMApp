@@ -8,6 +8,7 @@ import NotificationBell from "../../components/NotificationBell";
 
 export default function MainAdmin() {
   const [profile, setProfile] = useState(null);
+  const [count, setCount] = useState(0);
   const [error, setError] = useState(null);
   const [users, setUsers] = useState(null);
   const [showUser, setShowUser] = useState(false);
@@ -82,7 +83,10 @@ export default function MainAdmin() {
               className="border rounded-lg px-3 py-1 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-cyan-400"
             />
           </div>
-          <NotificationBell refresh={refreshNotifications} />
+          <NotificationBell
+            refresh={refreshNotifications}
+            setCount={setCount}
+          />
         </div>
       </header>
 
