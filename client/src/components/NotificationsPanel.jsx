@@ -5,9 +5,6 @@ export default function NotificationsPanel() {
 
   const fetchNotifications = async () => {
     try {
-      await fetch("http://localhost:3000/users/notifications", {
-        method: "POST",
-      });
       const res = await fetch("http://localhost:3000/users/notifications");
       const data = await res.json();
       setNotifications(Array.isArray(data) ? data : []);
@@ -15,7 +12,6 @@ export default function NotificationsPanel() {
       console.error("Error al cargar notificaciones", err);
     }
   };
-
   const markAsRead = async (id) => {
     try {
       await fetch(`http://localhost:3000/users/notifications/${id}/read`, {

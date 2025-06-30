@@ -260,7 +260,7 @@ export const generatePaymentReminders = async (
         const existing = await prisma.notifications.findFirst({
           where: {
             userId: user.id,
-            type: "vencimiento",
+            type: type, // 👈 ahora usamos el type real generado arriba
             read: false,
           },
         });
