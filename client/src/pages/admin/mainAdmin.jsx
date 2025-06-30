@@ -4,6 +4,7 @@ import UserDashboard from "./userDashboard";
 import { useNavigate } from "react-router-dom";
 import RegisterModal from "../../components/RegisterModal";
 import NotificationsPanel from "../../components/NotificationsPanel";
+import NotificationBell from "../../components/NotificationBell";
 
 export default function MainAdmin() {
   const [profile, setProfile] = useState(null);
@@ -81,7 +82,7 @@ export default function MainAdmin() {
               className="border rounded-lg px-3 py-1 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-cyan-400"
             />
           </div>
-          <NotificationsPanel refresh={refreshNotifications} />
+          <NotificationBell refresh={refreshNotifications} />
         </div>
       </header>
 
