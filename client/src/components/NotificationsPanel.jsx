@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
 
-export default function NotificationsPanel({ setCount }) {
+export default function NotificationsPanel({ refresh }) {
   const [notifications, setNotifications] = useState([]);
   const token = localStorage.getItem("token");
-
-  if (!token) {
-    setError("No hay token. Iniciá sesión.");
-    return;
-  }
 
   const fetchNotifications = async () => {
     try {
@@ -18,7 +13,6 @@ export default function NotificationsPanel({ setCount }) {
       });
       const data = await res.json();
       setNotifications(Array.isArray(data) ? data : []);
-      setCount(data.length); // 👈 actualizamos el contador
     } catch (err) {
       console.error("Error al cargar notificaciones", err);
     }
@@ -28,12 +22,11 @@ export default function NotificationsPanel({ setCount }) {
     try {
       await fetch(`http://localhost:3000/users/notifications/${id}/read`, {
         method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      setNotifications((prev) => {
-        const updated = prev.filter((n) => n.id !== id);
-        setCount(updated.length); // 👈 actualizamos después de marcar
-        return updated;
-      });
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
     } catch (err) {
       console.error("Error al marcar como leída", err);
     }
@@ -41,7 +34,7 @@ export default function NotificationsPanel({ setCount }) {
 
   useEffect(() => {
     fetchNotifications();
-  }, []);
+  }, [refresh]); // recarga si hay cambios externos
 
   return (
     <div className="w-80 bg-white shadow-lg rounded-xl p-4 border border-gray-200 max-h-96 overflow-y-auto">

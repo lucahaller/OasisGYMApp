@@ -19,7 +19,7 @@ export default function MainAdmin() {
   const dispatch = useDispatch();
   const [count, setCount] = useState(0);
   const [refreshNotifications, setRefreshNotifications] = useState(false);
-
+  const [notifications, setNotifications] = useState([]);
   const handleRegister = async (formData) => {
     try {
       await dispatch(register(formData));
@@ -57,7 +57,22 @@ export default function MainAdmin() {
       .then((res) => setUsers(res.data))
       .catch((err) => {
         console.error("Error al obtener usuarios:", err);
-        setError("No se pudo cargar el perfil.");
+        setError("No se pudo cargar los usuarios.");
+      });
+
+    // 🔔 Traer notificaciones automáticamente
+    axios
+      .get("http://localhost:3000/users/notifications", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        setNotifications(Array.isArray(res.data) ? res.data : []);
+        setCount(res.data.length);
+      })
+      .catch((err) => {
+        console.error("Error al obtener notificaciones:", err);
       });
   }, []);
 
@@ -65,7 +80,7 @@ export default function MainAdmin() {
     return <div className="text-red-600 text-center mt-10">{error}</div>;
   if (!profile)
     return <div className="text-center mt-10">Cargando perfil...</div>;
-
+  console.log(users);
   return (
     <div className="flex flex-col min-h-screen">
       <header className="sticky top-0 z-10 bg-white border-b px-6 py-4 flex items-center justify-between shadow-sm">
@@ -76,10 +91,7 @@ export default function MainAdmin() {
             placeholder="Buscar..."
             className="border rounded-lg px-3 py-1 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-cyan-400"
           />
-          <NotificationBell
-            refresh={refreshNotifications}
-            setCount={setCount}
-          />
+          <NotificationBell count={count} refresh={refreshNotifications} />
         </div>
       </header>
 

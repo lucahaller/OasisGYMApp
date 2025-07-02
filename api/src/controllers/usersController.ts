@@ -1,8 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import * as userService from "../services/userService";
 import { prisma } from "../prisma/client";
+import generatePaymentRemindersUtil from "../utils/generatePaymentReminders";
 
 export const getAllUsers = async (_req: Request, res: Response) => {
+  const notifications = await prisma.notifications.findMany({
+    where: { read: false },
+    orderBy: { date: "desc" },
+  });
   const users = await userService.getAll();
 
   res.json(users);
@@ -142,48 +147,37 @@ export const creditUserPayment = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllNotifications = async (_req: Request, res: Response) => {
-  console.log("🔔  Entered getAllNotifications");
-  try {
-    // Solo las NO leídas
-    const notifications = await prisma.notifications.findMany({
-      where: {
-        read: false,
-      },
-      orderBy: { date: "desc" },
-    });
+export const getAllNotifications = async (req: Request, res: Response) => {
+  // 1) Generar recordatorios de semáforo
+  await generatePaymentRemindersUtil();
 
-    const users = await prisma.users.findMany({
-      where: { id: { in: notifications.map((n) => n.userId) } },
-      select: { id: true, name: true },
-    });
+  // 2) Autorización
+  const user = (req as any).user;
+  if (!user || user.role !== "ADMIN")
+    return res.status(403).json({ message: "Acceso denegado" });
 
-    const userMap = new Map<number, string>(users.map((u) => [u.id, u.name]));
+  // 3) Leer las NO-leídas
+  const notifs = await prisma.notifications.findMany({
+    where: { read: false },
+    orderBy: { date: "desc" },
+  });
 
-    const enriched = notifications.map((n) => ({
-      id: n.id,
-      message: n.message,
-      date: n.date,
-      read: n.read,
-      user: {
-        id: n.userId,
-        name: userMap.get(n.userId) ?? "Usuario eliminado",
-      },
-    }));
+  // 4) Enriquecer con nombre de usuario
+  const users = await prisma.users.findMany({
+    where: { id: { in: notifs.map((n) => n.userId) } },
+    select: { id: true, name: true },
+  });
+  const userMap = new Map(users.map((u) => [u.id, u.name]));
 
-    return res.json(enriched);
-  } catch (err: unknown) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    console.error(
-      "🔥 Error en getAllNotifications:",
-      error.message,
-      error.stack
-    );
-    return res.status(500).json({
-      message: "Error al buscar las notificaciones",
-      error: error.message,
-    });
-  }
+  const enriched = notifs.map((n) => ({
+    id: n.id,
+    message: n.message,
+    date: n.date,
+    read: n.read,
+    user: { id: n.userId, name: userMap.get(n.userId) || "Usuario" },
+  }));
+
+  return res.json(enriched);
 };
 
 export const markNotificationAsRead = async (req: Request, res: Response) => {

@@ -2,24 +2,12 @@ import { useEffect, useState } from "react";
 import NotificationsPanel from "./NotificationsPanel";
 import { FaBell } from "react-icons/fa";
 
-export default function NotificationBell({ refresh }) {
+export default function NotificationBell({ count, refresh }) {
   const [showPanel, setShowPanel] = useState(false);
-  const [count, setCount] = useState(0);
 
   const togglePanel = () => {
     setShowPanel((prev) => !prev);
   };
-
-  // 👇 Opción: actualizar el contador al abrir el panel
-  useEffect(() => {
-    if (showPanel) {
-      fetch("http://localhost:3000/users/notifications")
-        .then((res) => res.json())
-        .then((data) => {
-          setCount(Array.isArray(data) ? data.length : 0);
-        });
-    }
-  }, [showPanel]);
 
   return (
     <div className="relative">
@@ -34,7 +22,7 @@ export default function NotificationBell({ refresh }) {
 
       {showPanel && (
         <div className="absolute right-0 mt-2 z-50">
-          <NotificationsPanel refresh={refresh} setCount={setCount} />
+          <NotificationsPanel refresh={refresh} />
         </div>
       )}
     </div>
