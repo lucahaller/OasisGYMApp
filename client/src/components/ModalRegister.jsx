@@ -24,7 +24,7 @@ export default function ModalRegister({ isOpen, onClose, onRegister }) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    console.log(formData);
+
     try {
       // Convertir los numéricos a number si no están vacíos
       const finalData = {

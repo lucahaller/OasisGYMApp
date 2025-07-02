@@ -117,12 +117,21 @@ export const creditUserPayment = async (req: Request, res: Response) => {
     const expiration = new Date(lastPayment);
     expiration.setMonth(expiration.getMonth() + Number(months));
 
-    await prisma.users.update({
+    const updatedUser = await prisma.users.update({
       where: { id: parseInt(id) },
       data: {
         last_payment: lastPayment,
         payment_expiration: expiration,
         payment_amount: parseFloat(amount),
+        payment_status: "verde",
+      },
+    });
+
+    // 👇 Agregar notificación por nuevo pago
+    await prisma.notifications.create({
+      data: {
+        userId: updatedUser.id,
+        message: `Nuevo pago acreditado para el usuario ${updatedUser.name}`,
       },
     });
 
@@ -130,5 +139,125 @@ export const creditUserPayment = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error al acreditar pago:", error);
     res.status(500).json({ message: "Error al acreditar pago" });
+  }
+};
+
+export const getAllNotifications = async (_req: Request, res: Response) => {
+  console.log("🔔  Entered getAllNotifications");
+  try {
+    // Solo las NO leídas
+    const notifications = await prisma.notifications.findMany({
+      where: {
+        read: false,
+      },
+      orderBy: { date: "desc" },
+    });
+
+    const users = await prisma.users.findMany({
+      where: { id: { in: notifications.map((n) => n.userId) } },
+      select: { id: true, name: true },
+    });
+
+    const userMap = new Map<number, string>(users.map((u) => [u.id, u.name]));
+
+    const enriched = notifications.map((n) => ({
+      id: n.id,
+      message: n.message,
+      date: n.date,
+      read: n.read,
+      user: {
+        id: n.userId,
+        name: userMap.get(n.userId) ?? "Usuario eliminado",
+      },
+    }));
+
+    return res.json(enriched);
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    console.error(
+      "🔥 Error en getAllNotifications:",
+      error.message,
+      error.stack
+    );
+    return res.status(500).json({
+      message: "Error al buscar las notificaciones",
+      error: error.message,
+    });
+  }
+};
+
+export const markNotificationAsRead = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    await prisma.notifications.update({
+      where: { id: Number(id) },
+      data: { read: true },
+    });
+
+    res.json({ message: "Notificación marcada como leída" });
+  } catch (error) {
+    console.error("Error al marcar notificación como leída:", error);
+    res.status(500).json({ message: "Error al actualizar notificación" });
+  }
+};
+
+export const generatePaymentReminders = async (
+  _req: Request,
+  res: Response
+) => {
+  try {
+    const users = await prisma.users.findMany();
+
+    for (const user of users) {
+      if (!user.payment_expiration) continue;
+
+      const today = new Date();
+      const diffTime = user.payment_expiration.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      let message = "";
+      let type = "";
+      let shouldCreateNotification = false;
+
+      if (diffDays <= 0) {
+        type = "pago_vencido";
+        message = `El pago del usuario ${user.name} ha vencido.`;
+        shouldCreateNotification = true;
+      } else if (diffDays <= 5) {
+        type = `pago_${diffDays}_dias`;
+        message = `El pago del usuario ${user.name} vence en ${diffDays} días.`;
+        shouldCreateNotification = true;
+      } else if (diffDays <= 14) {
+        type = "pago_proximo";
+        message = `El pago del usuario ${user.name} vence pronto.`;
+        shouldCreateNotification = true;
+      }
+
+      if (shouldCreateNotification) {
+        const existing = await prisma.notifications.findFirst({
+          where: {
+            userId: user.id,
+            type: type, // 👈 ahora usamos el type real generado arriba
+            read: false,
+          },
+        });
+
+        if (!existing) {
+          await prisma.notifications.create({
+            data: {
+              type,
+              message,
+              userId: user.id,
+            },
+          });
+        }
+      }
+    }
+
+    res.json({ message: "Recordatorios generados correctamente" });
+  } catch (error) {
+    console.error("Error generando recordatorios:", error);
+    res.status(500).json({ message: "Error generando recordatorios" });
   }
 };

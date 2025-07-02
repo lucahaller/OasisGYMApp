@@ -8,6 +8,26 @@ import { authorizeRole } from "../middleware/authMiddlewareRole";
 const router = Router();
 
 router.get(
+  "/notifications",
+  authenticateToken,
+  authorizeRole("ADMIN"),
+  asyncHandler(userController.getAllNotifications)
+);
+
+router.post(
+  "/notifications",
+  authenticateToken,
+  authorizeRole("ADMIN"),
+  asyncHandler(userController.generatePaymentReminders)
+);
+router.patch(
+  "/notifications/:id/read",
+  authenticateToken,
+  authorizeRole("ADMIN"),
+  asyncHandler(userController.markNotificationAsRead)
+);
+
+router.get(
   "/",
   authenticateToken,
   authorizeRole("ADMIN"),
@@ -18,19 +38,19 @@ router.get(
   "/profile",
   authenticateToken,
   authorizeRole("USER", "ADMIN"),
-  userController.getProfile
+  asyncHandler(userController.getProfile)
 );
 router.put(
   "/update/:id",
   authenticateToken,
   authorizeRole("ADMIN"),
-  userController.updateProfile
+  asyncHandler(userController.updateProfile)
 );
 router.get(
   "/:id",
   authenticateToken,
   authorizeRole("ADMIN"),
-  userController.getUserById
+  asyncHandler(userController.getUserById)
 );
 router.delete(
   "/:id",
