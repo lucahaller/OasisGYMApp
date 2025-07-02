@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import UserDashboard from "./userDashboard";
 import LogOutButton from "../../components/LogOutButton";
 import { useNavigate } from "react-router-dom";
+import ModalRegister from "../../components/ModalRegister";
+import { useDispatch } from "react-redux";
+import { register } from "../../actions/authActions";
 
 export default function MainAdmin() {
   const [profile, setProfile] = useState(null);
@@ -11,6 +14,17 @@ export default function MainAdmin() {
   const [showUser, setShowUser] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const dispatch = useDispatch();
+
+  const handleRegister = async (formData) => {
+    try {
+      await dispatch(register(formData));
+      // Mostrar mensaje de éxito si querés
+    } catch (err) {
+      console.error("Error al registrar usuario", err);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -210,9 +224,26 @@ export default function MainAdmin() {
           </div>
           {!showUser ? (
             <div className="p-6">
-              <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-                Usuarios Registrados
-              </h2>
+              <div className=" flex flex-row">
+                <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+                  Usuarios Registrados
+                </h2>
+
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-green-600 ml-auto  text-white px-4 py-2 rounded mb-4"
+                >
+                  Registrar nuevo usuario
+                </button>
+              </div>
+
+              {/* Lista de clientes aquí */}
+
+              <ModalRegister
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onRegister={handleRegister}
+              />
 
               <div className="overflow-x-auto">
                 <table className="min-w-full bg-white rounded-xl shadow">

@@ -1,14 +1,14 @@
 // src/routes/AppRoutes.jsx
 import { Routes, Route } from "react-router-dom";
 
-import Landing from "../pages/register&landing/Landing";
 import MainProfile from "../pages/profile/mainProfile";
-import RegisterLogin from "../pages/register&landing/RegisterLogin";
+
 import MainAdmin from "../pages/admin/mainAdmin";
 import LoginGuard from "../middleware/LoginGuard";
 import AuthGuard from "../middleware/AuthGuard";
 import UserDashboard from "../pages/admin/userDashboard";
 import UserDetailPage from "../pages/admin/UserDetailPage";
+import Landing from "../pages/register&landing/Landing.jsx";
 
 // Protección de rutas
 
@@ -26,14 +26,6 @@ const AppRoutes = () => {
       />
       <Route
         path="/login"
-        element={
-          <LoginGuard>
-            <Landing />
-          </LoginGuard>
-        }
-      />
-      <Route
-        path="/register"
         element={
           <LoginGuard>
             <Landing />

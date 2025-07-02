@@ -5,6 +5,11 @@ type NewUser = {
   name: string;
   email: string;
   password: string;
+  age?: number;
+  height?: number;
+  weight?: number;
+  injury?: string;
+  notes?: string;
 };
 
 export const create = async (

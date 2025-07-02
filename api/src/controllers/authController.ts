@@ -8,6 +8,11 @@ interface RegisterBody {
   name: string;
   email: string;
   password: string;
+  age?: number;
+  height?: number;
+  weight?: number;
+  injury?: string;
+  notes?: string;
 }
 
 export const register = async (
@@ -15,7 +20,8 @@ export const register = async (
   res: Response
 ) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, age, height, weight, injury, notes } =
+      req.body;
 
     if (!name || !email || !password) {
       return res
@@ -31,16 +37,22 @@ export const register = async (
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const normalize = (val: any) => (val === "" ? null : val);
+
     const newUser = await prisma.users.create({
       data: {
         name,
         email,
         password: hashedPassword,
         created_at: new Date(),
-        role: "USER", // valor por defecto
+        role: "USER",
+        age: normalize(age),
+        height: normalize(height),
+        weight: normalize(weight),
+        injury: normalize(injury),
+        notes: normalize(notes),
       },
     });
-
     res.status(201).json({
       message: "Usuario registrado correctamente.",
       user: {

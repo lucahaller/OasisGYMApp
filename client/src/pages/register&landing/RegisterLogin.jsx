@@ -115,14 +115,6 @@ export default function RegisterLogin({ onSubmit }) {
             {isLogin ? "Iniciar sesión" : "Registrarse"}
           </button>
         </form>
-
-        <div className="mt-4 text-center">
-          <button onClick={toggleForm} className="text-blue-600 underline">
-            {isLogin
-              ? "¿No tenés cuenta? Registrate"
-              : "¿Ya tenés cuenta? Iniciá sesión"}
-          </button>
-        </div>
       </div>
     </div>
   );

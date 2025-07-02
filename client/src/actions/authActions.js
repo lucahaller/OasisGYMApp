@@ -32,25 +32,21 @@ export const login = (email, password) => async (dispatch) => {
   }
 };
 
-export const register = (name, email, password) => async (dispatch) => {
+export const register = (formData) => async (dispatch) => {
   dispatch(authStart());
 
   try {
     const response = await axios.post(
       "http://localhost:3000/api/auth/register",
-      {
-        name,
-        email,
-        password,
-      }
+      formData
     );
-    console.log(response);
+
     const { token, user } = response.data;
 
-    localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
     dispatch(authSuccess(token, user));
   } catch (error) {
     dispatch(authFail(error.response?.data?.message || "Error al registrarse"));
+    throw error;
   }
 };

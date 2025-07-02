@@ -9,9 +9,26 @@ export const getAllUsers = async (_req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  const { name, email, password } = req.body;
-  const newUser = await userService.create({ name, email, password });
-  res.status(201).json(newUser);
+  const { name, email, password, age, height, weight, injury, notes } =
+    req.body;
+
+  try {
+    const newUser = await userService.create({
+      name,
+      email,
+      password,
+      age,
+      height,
+      weight,
+      injury,
+      notes,
+    });
+
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.error("Error al crear el usuario:", error);
+    res.status(500).json({ message: "Error al crear el usuario." });
+  }
 };
 
 export const deleteUser = async (req: Request, res: Response) => {
