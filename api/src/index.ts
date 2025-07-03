@@ -1,6 +1,7 @@
 // src/index.ts
 import express from "express";
 import userRoutes from "./routes/usersRoutes";
+import clientRoutes from "./routes/clientRoutes";
 import authRoutes from "./routes/authRoutes";
 import adminRoutes from "./routes/adminRoutes";
 import cors from "cors";
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/users", userRoutes);
+app.use("/client", clientRoutes);
 app.use("/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 

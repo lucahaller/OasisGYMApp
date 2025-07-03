@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import LogOutButton from "../../components/LogOutButton";
+import ClientNotificationsPanel from "../../components/ClientNotificationsPanel";
 
 export default function MainProfile() {
   const [profile, setProfile] = useState(null);
@@ -60,8 +61,8 @@ export default function MainProfile() {
     return <div className="text-center mt-6">Cargando perfil...</div>;
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen bg-gray-100 p-6">
-      <div className="w-full max-w-2xl bg-white shadow-md rounded-lg p-6">
+    <div className="flex flex-col items-center justify-start min-h-screen bg-white p-6">
+      <div className="w-full   p-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
           Perfil de Usuario
         </h2>
@@ -152,15 +153,16 @@ export default function MainProfile() {
       </div>
 
       {/* Placeholder para rutinas */}
-      <div className="w-full max-w-2xl bg-white shadow-md rounded-lg p-6 mt-8">
+      <div className="w-full   p-6 mt-8">
         <h3 className="text-xl font-bold text-gray-800 mb-2">Tus Rutinas</h3>
         <p className="text-gray-600">
           Próximamente podrás ver tus rutinas asignadas.
         </p>
       </div>
+      <ClientNotificationsPanel />
 
       {/* Placeholder para evaluación */}
-      <div className="w-full max-w-2xl bg-white shadow-md rounded-lg p-6 mt-6 mb-10">
+      <div className="w-full p-6 mt-6 mb-10">
         <h3 className="text-xl font-bold text-gray-800 mb-2">
           Evaluación de Rutinas
         </h3>

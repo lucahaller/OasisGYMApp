@@ -4,6 +4,7 @@ export default async function generatePaymentRemindersUtil() {
   const users = await prisma.users.findMany();
 
   const today = new Date();
+
   for (const u of users) {
     const exp = u.payment_expiration;
     const diffDays = exp
@@ -24,24 +25,22 @@ export default async function generatePaymentRemindersUtil() {
       });
     }
 
-    // 3) Decidir mensaje y tipo
+    // 3) Crear notificación si corresponde
     let type: string | null = null;
     let message: string | null = null;
+
     if (diffDays! < 0) {
       type = "pago_vencido";
       message = `El pago de ${u.name} ha vencido.`;
-    } else if (diffDays! <= 5 && diffDays! >= 1) {
+    } else if ([7, 5, 3, 1].includes(diffDays!)) {
       type = `pago_${diffDays}_dias`;
       message = `El pago de ${u.name} vence en ${diffDays} día(s).`;
-    } else if (diffDays! <= 14) {
-      type = "pago_proximo";
-      message = `El pago de ${u.name} vence pronto.`;
     }
 
-    // 4) Crear notificación si aplica y no existe
+    // 4) Evitar duplicados exactos por tipo
     if (type && message) {
       const exists = await prisma.notifications.findFirst({
-        where: { userId: u.id, type, read: false },
+        where: { userId: u.id, type },
       });
       if (!exists) {
         await prisma.notifications.create({

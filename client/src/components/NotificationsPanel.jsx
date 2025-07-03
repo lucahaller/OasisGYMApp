@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function NotificationsPanel({ refresh }) {
+export default function NotificationsPanel({ refresh, onCountChange }) {
   const [notifications, setNotifications] = useState([]);
   const token = localStorage.getItem("token");
 
@@ -12,7 +12,9 @@ export default function NotificationsPanel({ refresh }) {
         },
       });
       const data = await res.json();
-      setNotifications(Array.isArray(data) ? data : []);
+      const arr = Array.isArray(data) ? data : [];
+      setNotifications(arr);
+      if (onCountChange) onCountChange(arr.length);
     } catch (err) {
       console.error("Error al cargar notificaciones", err);
     }
@@ -26,7 +28,9 @@ export default function NotificationsPanel({ refresh }) {
           Authorization: `Bearer ${token}`,
         },
       });
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      const newNotifications = notifications.filter((n) => n.id !== id);
+      setNotifications(newNotifications);
+      if (onCountChange) onCountChange(newNotifications.length);
     } catch (err) {
       console.error("Error al marcar como leída", err);
     }
@@ -34,7 +38,7 @@ export default function NotificationsPanel({ refresh }) {
 
   useEffect(() => {
     fetchNotifications();
-  }, [refresh]); // recarga si hay cambios externos
+  }, [refresh]);
 
   return (
     <div className="w-80 bg-white shadow-lg rounded-xl p-4 border border-gray-200 max-h-96 overflow-y-auto">
