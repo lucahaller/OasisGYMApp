@@ -1,75 +1,52 @@
-import { PrismaClient } from "@prisma/client";
+import { Role } from "@prisma/client";
+import { prisma } from "../../api/src/prisma/client";
 const bcrypt = require("bcrypt");
 
-const prisma = new PrismaClient();
+async function seed() {
+  await prisma.notifications.deleteMany();
+  await prisma.users.deleteMany();
 
-async function main() {
-  const hashedPassword = await bcrypt.hash("123456", 10);
+  const hashedPassword = await bcrypt.hash("1234", 10);
+
   const today = new Date();
 
-  const createDateOffset = (days: number) => {
-    const expiration = new Date(today);
-    expiration.setDate(expiration.getDate() + days);
-    const lastPayment = new Date(expiration);
-    lastPayment.setMonth(lastPayment.getMonth() - 1); // pago hace un mes
-    return { last_payment: lastPayment, payment_expiration: expiration };
-  };
+  const users = [
+    {
+      name: "Usuario Rojo",
+      email: "rojo@example.com",
+      password: hashedPassword,
+      role: Role.USER, // 👈 usa enum, no string
+      last_payment: new Date(today.getTime() - 40 * 86400000),
+      payment_expiration: new Date(today.getTime() - 10 * 86400000),
+    },
+    {
+      name: "Usuario Amarillo",
+      email: "amarillo@example.com",
+      password: hashedPassword,
+      role: Role.USER,
+      last_payment: new Date(today.getTime() - 25 * 86400000),
+      payment_expiration: new Date(today.getTime() + 5 * 86400000),
+    },
+    {
+      name: "Usuario Verde",
+      email: "verde@example.com",
+      password: hashedPassword,
+      role: Role.USER,
+      last_payment: new Date(today.getTime() - 15 * 86400000),
+      payment_expiration: new Date(today.getTime() + 14 * 86400000),
+    },
+    {
+      name: "Admin",
+      email: "admin@example.com",
+      password: hashedPassword,
+      role: Role.ADMIN,
+      last_payment: null,
+      payment_expiration: null,
+    },
+  ];
 
-  await prisma.users.createMany({
-    data: [
-      {
-        name: "Vence en 7 días",
-        email: "vence7@example.com",
-        password: hashedPassword,
-        ...createDateOffset(7),
-        payment_amount: 5000,
-      },
-      {
-        name: "Vence en 5 días",
-        email: "vence5@example.com",
-        password: hashedPassword,
-        ...createDateOffset(5),
-        payment_amount: 5000,
-      },
-      {
-        name: "Vence en 3 días",
-        email: "vence3@example.com",
-        password: hashedPassword,
-        ...createDateOffset(3),
-        payment_amount: 5000,
-      },
-      {
-        name: "Vence en 1 día",
-        email: "vence1@example.com",
-        password: hashedPassword,
-        ...createDateOffset(1),
-        payment_amount: 5000,
-      },
-      {
-        name: "Pago vencido",
-        email: "vencido@example.com",
-        password: hashedPassword,
-        last_payment: new Date("2024-06-01"),
-        payment_expiration: new Date("2024-07-01"),
-        payment_amount: 5000,
-      },
-      {
-        name: "Sin pagos aún",
-        email: "sinpago@example.com",
-        password: hashedPassword,
-        last_payment: null,
-        payment_expiration: null,
-        payment_amount: null,
-      },
-    ],
-  });
-
-  console.log("✅ Seed con usuarios de prueba insertado correctamente.");
+  await prisma.users.createMany({ data: users });
+  console.log("✅ Seed ejecutado con éxito");
 }
 
-main()
-  .catch((e) => {
-    console.error("❌ Error en seed:", e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+seed().catch((e) => console.error("❌ Error:", e));

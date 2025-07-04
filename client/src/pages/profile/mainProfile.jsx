@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import LogOutButton from "../../components/LogOutButton";
 import ClientNotificationsPanel from "../../components/ClientNotificationsPanel";
+import { FaBell } from "react-icons/fa";
+import ClientNotificationBell from "../../components/ClientNotificationsBell";
 
 export default function MainProfile() {
   const [profile, setProfile] = useState(null);
@@ -9,10 +11,10 @@ export default function MainProfile() {
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [tab, setTab] = useState("perfil");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-
     if (!token) {
       setError("No hay token. Iniciá sesión.");
       return;
@@ -30,10 +32,7 @@ export default function MainProfile() {
           weight: res.data.user.weight || "",
         });
       })
-      .catch((err) => {
-        console.error("Error al obtener perfil:", err);
-        setError("No se pudo cargar el perfil.");
-      });
+      .catch(() => setError("No se pudo cargar el perfil."));
   }, []);
 
   const handleChange = (e) => {
@@ -49,8 +48,7 @@ export default function MainProfile() {
       });
       setMessage("Perfil actualizado correctamente.");
       setEditing(false);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Error al actualizar perfil.");
     }
   };
@@ -61,115 +59,147 @@ export default function MainProfile() {
     return <div className="text-center mt-6">Cargando perfil...</div>;
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen bg-white p-6">
-      <div className="w-full   p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          Perfil de Usuario
-        </h2>
-        <div className="space-y-2">
-          <p>
-            <strong>Nombre:</strong> {profile.name}
-          </p>
-          <p>
-            <strong>Email:</strong> {profile.email}
-          </p>
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Encabezado */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">
+          Perfil de {profile.name}
+        </h1>
+        <div className="flex items-center gap-4">
+          <div className="">
+            <ClientNotificationBell />
+          </div>
+          <img src="/logo.png" alt="Gimnasio" className="h-10" />
+          <LogOutButton />
         </div>
+      </div>
 
-        <div className="mt-6">
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">
-            Información Física
-          </h3>
+      {/* Tabs */}
+      <div className="flex space-x-4 border-b mb-4">
+        <button
+          onClick={() => setTab("perfil")}
+          className={`pb-2 border-b-2 ${
+            tab === "perfil"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-600"
+          } font-medium`}
+        >
+          Datos
+        </button>
+        <button
+          onClick={() => setTab("rutinas")}
+          className={`pb-2 border-b-2 ${
+            tab === "rutinas"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-600"
+          } font-medium`}
+        >
+          Rutinas
+        </button>
+        <button
+          onClick={() => setTab("evaluacion")}
+          className={`pb-2 border-b-2 ${
+            tab === "evaluacion"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-600"
+          } font-medium`}
+        >
+          Evaluación
+        </button>
+      </div>
+
+      {/* Paneles */}
+      {tab === "perfil" && (
+        <div className="bg-white rounded-lg shadow p-6 space-y-4">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <p>
+              <strong>Email:</strong> {profile.email}
+            </p>
+            <p>
+              <strong>Edad:</strong> {profile.age ?? "No especificado"}
+            </p>
+            <p>
+              <strong>Altura:</strong> {profile.height ?? "No especificado"} cm
+            </p>
+            <p>
+              <strong>Peso:</strong> {profile.weight ?? "No especificado"} kg
+            </p>
+          </div>
+
           {editing ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium">Edad</label>
-                <input
-                  type="number"
-                  name="age"
-                  value={formData.age}
-                  onChange={handleChange}
-                  className="mt-1 w-full border-gray-300 rounded-md shadow-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Altura (cm)</label>
-                <input
-                  type="number"
-                  name="height"
-                  value={formData.height}
-                  onChange={handleChange}
-                  className="mt-1 w-full border-gray-300 rounded-md shadow-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Peso (kg)</label>
-                <input
-                  type="number"
-                  name="weight"
-                  value={formData.weight}
-                  onChange={handleChange}
-                  className="mt-1 w-full border-gray-300 rounded-md shadow-sm"
-                />
-              </div>
-              <div className="sm:col-span-3 flex justify-end gap-2 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+              <input
+                name="age"
+                type="number"
+                placeholder="Edad"
+                value={formData.age}
+                onChange={handleChange}
+                className="border rounded p-2"
+              />
+              <input
+                name="height"
+                type="number"
+                placeholder="Altura (cm)"
+                value={formData.height}
+                onChange={handleChange}
+                className="border rounded p-2"
+              />
+              <input
+                name="weight"
+                type="number"
+                placeholder="Peso (kg)"
+                value={formData.weight}
+                onChange={handleChange}
+                className="border rounded p-2"
+              />
+              <div className="sm:col-span-3 flex justify-end gap-2">
                 <button
                   onClick={handleUpdate}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                 >
                   Guardar
                 </button>
                 <button
                   onClick={() => setEditing(false)}
-                  className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition"
+                  className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
                 >
                   Cancelar
                 </button>
               </div>
             </div>
           ) : (
-            <div className="space-y-1">
-              <p>
-                <strong>Edad:</strong> {profile.age ?? "No especificado"}
-              </p>
-              <p>
-                <strong>Altura:</strong> {profile.height ?? "No especificado"}{" "}
-                cm
-              </p>
-              <p>
-                <strong>Peso:</strong> {profile.weight ?? "No especificado"} kg
-              </p>
-              <button
-                onClick={() => setEditing(true)}
-                className="mt-2 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition"
-              >
-                Editar Información
-              </button>
-            </div>
+            <button
+              onClick={() => setEditing(true)}
+              className="mt-4 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+            >
+              Editar Información
+            </button>
           )}
+          {message && <p className="text-green-600">{message}</p>}
         </div>
-        <LogOutButton />
-        {message && <div className="text-green-600 mt-4">{message}</div>}
-        {error && <div className="text-red-600 mt-4">{error}</div>}
-      </div>
+      )}
 
-      {/* Placeholder para rutinas */}
-      <div className="w-full   p-6 mt-8">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">Tus Rutinas</h3>
-        <p className="text-gray-600">
-          Próximamente podrás ver tus rutinas asignadas.
-        </p>
-      </div>
-      <ClientNotificationsPanel />
+      {tab === "rutinas" && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            Tus Rutinas
+          </h3>
+          <p className="text-gray-600">
+            Próximamente podrás ver tus rutinas asignadas.
+          </p>
+        </div>
+      )}
 
-      {/* Placeholder para evaluación */}
-      <div className="w-full p-6 mt-6 mb-10">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">
-          Evaluación de Rutinas
-        </h3>
-        <p className="text-gray-600">
-          Aquí podrás evaluar tu progreso una vez tengas rutinas.
-        </p>
-      </div>
+      {tab === "evaluacion" && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            Evaluación
+          </h3>
+          <p className="text-gray-600">
+            Aquí podrás evaluar tu progreso una vez tengas rutinas.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
