@@ -35,14 +35,6 @@ async function seed() {
       last_payment: new Date(today.getTime() - 15 * 86400000),
       payment_expiration: new Date(today.getTime() + 14 * 86400000),
     },
-    {
-      name: "Admin",
-      email: "admin@example.com",
-      password: hashedPassword,
-      role: Role.ADMIN,
-      last_payment: null,
-      payment_expiration: null,
-    },
   ];
 
   await prisma.users.createMany({ data: users });
