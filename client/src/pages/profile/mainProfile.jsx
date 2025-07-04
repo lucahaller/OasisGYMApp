@@ -4,6 +4,7 @@ import LogOutButton from "../../components/LogOutButton";
 import ClientNotificationsPanel from "../../components/ClientNotificationsPanel";
 import { FaBell } from "react-icons/fa";
 import ClientNotificationBell from "../../components/ClientNotificationsBell";
+import Swal from "sweetalert2";
 
 export default function MainProfile() {
   const [profile, setProfile] = useState(null);
@@ -12,9 +13,22 @@ export default function MainProfile() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [tab, setTab] = useState("perfil");
+  const [user, setUser] = useState("");
+  const Toast = Swal.mixin({
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 1500,
+    timerProgressBar: true,
 
+    didOpen: (toast) => {
+      toast.onmouseenter = Swal.stopTimer;
+      toast.onmouseleave = Swal.resumeTimer;
+    },
+  });
   useEffect(() => {
     const token = localStorage.getItem("token");
+    setUser(localStorage.getItem("user"));
     if (!token) {
       setError("No hay token. Iniciá sesión.");
       return;
@@ -43,11 +57,21 @@ export default function MainProfile() {
   const handleUpdate = async () => {
     const token = localStorage.getItem("token");
     try {
-      await axios.put("http://localhost:3000/users/update", formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.put(
+        `http://localhost:3000/users/update/${profile?.id}`,
+        formData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setMessage("Perfil actualizado correctamente.");
       setEditing(false);
+      Toast.fire({
+        icon: "success",
+        title: "Cambios realizados exitosamente",
+      }).then(() => {
+        window.location.reload();
+      });
     } catch {
       setError("Error al actualizar perfil.");
     }
@@ -67,7 +91,7 @@ export default function MainProfile() {
         </h1>
         <div className="flex items-center gap-4">
           <div className="">
-            <ClientNotificationBell />
+            <ClientNotificationBell user={user} />
           </div>
           <img src="/logo.png" alt="Gimnasio" className="h-10" />
           <LogOutButton />
@@ -170,7 +194,7 @@ export default function MainProfile() {
           ) : (
             <button
               onClick={() => setEditing(true)}
-              className="mt-4 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+              className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
             >
               Editar Información
             </button>

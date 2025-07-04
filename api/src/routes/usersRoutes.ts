@@ -43,7 +43,7 @@ router.get(
 router.put(
   "/update/:id",
   authenticateToken,
-  authorizeRole("ADMIN"),
+  authorizeRole("ADMIN", "USER"),
   asyncHandler(userController.updateProfile)
 );
 router.get(

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FiX } from "react-icons/fi";
+import Swal from "sweetalert2";
 
 export default function PaymentModal({ userId, onClose, onSuccess }) {
   const [months, setMonths] = useState(1);
@@ -7,6 +8,18 @@ export default function PaymentModal({ userId, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const Toast = Swal.mixin({
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 1500,
+    timerProgressBar: true,
+
+    didOpen: (toast) => {
+      toast.onmouseenter = Swal.stopTimer;
+      toast.onmouseleave = Swal.resumeTimer;
+    },
+  });
 
   const handleSubmit = async () => {
     if (!months || !amount) {
@@ -35,10 +48,14 @@ export default function PaymentModal({ userId, onClose, onSuccess }) {
       if (!response.ok) {
         throw new Error("Error al acreditar el pago.");
       }
-
-      setMessage("Pago acreditado con éxito.");
-      onSuccess(); // refresca la UI externa si lo deseás
-      setTimeout(() => onClose(), 1500); // cierra el modal luego de mostrar éxito
+      onClose();
+      Toast.fire({
+        icon: "success",
+        title: "Pago realizado exitosamente",
+      }).then(() => {
+        onSuccess(); // refresca la UI externa si lo deseás
+      });
+      // cierra el modal luego de mostrar éxito
     } catch (err) {
       console.error(err);
       setError("No se pudo acreditar el pago.");

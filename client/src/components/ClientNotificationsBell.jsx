@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FaBell } from "react-icons/fa";
 
-export default function ClientNotificationBell() {
+export default function ClientNotificationBell({ user }) {
   const [showPanel, setShowPanel] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const token = localStorage.getItem("token");
@@ -12,7 +12,41 @@ export default function ClientNotificationBell() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setNotifications(Array.isArray(data) ? data : []);
+
+      const user = JSON.parse(localStorage.getItem("user")); // asegurate de tenerlo guardado así
+
+      if (Array.isArray(data)) {
+        const personalized = data.map((n) => {
+          if (
+            user?.role === "USER" &&
+            n.message.includes(`El pago de ${user.name}`)
+          ) {
+            return {
+              ...n,
+              message: n.message.replace(`El pago de ${user.name}`, "Tu cuota"),
+            };
+          } else if (
+            user?.role === "USER" &&
+            n.message.includes(
+              `Nuevo pago acreditado para el usuario ${user.name}`
+            )
+          ) {
+            return {
+              ...n,
+              message: n.message.replace(
+                `Nuevo pago acreditado para el usuario ${user.name}`,
+                "Tu pago se acreditó correctamente"
+              ),
+            };
+          }
+
+          return n;
+        });
+
+        setNotifications(personalized);
+      } else {
+        setNotifications([]);
+      }
     } catch (err) {
       console.error("Error al obtener notificaciones", err);
     }
@@ -34,7 +68,7 @@ export default function ClientNotificationBell() {
   useEffect(() => {
     fetchNotifications();
   }, []);
-
+  console.log(notifications);
   return (
     <div className="relative">
       <button
@@ -55,25 +89,34 @@ export default function ClientNotificationBell() {
           {notifications.length === 0 ? (
             <p className="text-gray-500 text-sm">No tenés notificaciones</p>
           ) : (
-            notifications.map((n) => (
-              <div
-                key={n.id}
-                className="flex justify-between items-start border-b py-2"
-              >
-                <div className="flex-1">
-                  <p className="text-sm">{n.message}</p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(n.date).toLocaleString()}
-                  </p>
-                </div>
-                <button
-                  onClick={() => markAsRead(n.id)}
-                  className="text-red-500 hover:text-red-700 text-sm"
+            user &&
+            notifications.map((n) => {
+              const personalizedMessage =
+                user?.role === "USER" &&
+                n.message.includes(`El pago de ${user.name}`)
+                  ? n.message.replace(`El pago de ${user.name}`, "Tu cuota")
+                  : n.message;
+
+              return (
+                <div
+                  key={n.id}
+                  className="flex justify-between items-start border-b py-2"
                 >
-                  ✖
-                </button>
-              </div>
-            ))
+                  <div className="flex-1">
+                    <p className="text-sm">{personalizedMessage}</p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(n.date).toLocaleString()}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => markAsRead(n.id)}
+                    className="text-red-500 hover:text-red-700 text-sm"
+                  >
+                    ✖
+                  </button>
+                </div>
+              );
+            })
           )}
         </div>
       )}
