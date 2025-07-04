@@ -119,7 +119,7 @@ export default function MainAdmin() {
             <div className="overflow-x-auto">
               <table className="min-w-full bg-white rounded-xl shadow">
                 <thead>
-                  <tr className="bg-sky-600 text-white text-left text-sm uppercase font-semibold">
+                  <tr className="bg-green-400 text-white text-left text-sm uppercase font-semibold">
                     <th className="py-3 px-4">Nombre</th>
                     <th className="py-3 px-4">Email</th>
                     <th className="py-3 px-4">Edad</th>
@@ -165,9 +165,9 @@ export default function MainAdmin() {
                           onClick={() =>
                             navigate(`/dashboard/users/${user.id}`)
                           }
-                          className="bg-cyan-500 hover:bg-cyan-600 text-white text-sm px-3 py-1 rounded"
+                          className=" hover:bg-green-400 hover:border-green-500 hover:text-white text-green-700 border-2 border-gray-300 rounded-sm text-sm px-3 py-1 "
                         >
-                          Ver más
+                          Ver datos
                         </button>
                       </td>
                     </tr>
