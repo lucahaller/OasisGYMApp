@@ -7,8 +7,12 @@ import {
   assignRoutineToUser,
   getAllRoutineBases,
   getUserRoutine,
+  readRoutineExcel,
+  evaluateUserRoutine,
+  getUserRoutineExercises,
+  getEvaluatedRoutineFile,
 } from "../controllers/routinesController";
-
+import { upload } from "../middleware/uploadMiddleware";
 const router = express.Router();
 
 router.post(
@@ -34,6 +38,34 @@ router.get(
   authenticateToken,
   authorizeRole("ADMIN"),
   asyncHandler(getUserRoutine)
+);
+
+router.post(
+  "/upload-excel",
+  authenticateToken,
+  authorizeRole("ADMIN"), // o CLIENTE si es carga personalizada
+  upload.single("file"),
+  asyncHandler(readRoutineExcel)
+);
+router.get(
+  "/user/:userId/exercises",
+  authenticateToken,
+  authorizeRole("ADMIN"),
+  asyncHandler(getUserRoutineExercises)
+);
+
+router.post(
+  "/user/:userId/evaluate",
+  authenticateToken,
+  authorizeRole("ADMIN"),
+  asyncHandler(evaluateUserRoutine)
+);
+
+router.get(
+  "/user/:userId/evaluated-download",
+  authenticateToken,
+  authorizeRole("USER"),
+  asyncHandler(getEvaluatedRoutineFile)
 );
 
 export default router;

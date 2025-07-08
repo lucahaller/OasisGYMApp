@@ -5,6 +5,7 @@ import ClientNotificationsPanel from "../../components/ClientNotificationsPanel"
 import { FaBell } from "react-icons/fa";
 import ClientNotificationBell from "../../components/ClientNotificationsBell";
 import Swal from "sweetalert2";
+import DownloadEvaluatedRoutine from "./DownloadEvaluatedRoutine";
 
 export default function MainProfile() {
   const [profile, setProfile] = useState(null);
@@ -208,9 +209,7 @@ export default function MainProfile() {
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
             Tus Rutinas
           </h3>
-          <p className="text-gray-600">
-            Próximamente podrás ver tus rutinas asignadas.
-          </p>
+          <DownloadEvaluatedRoutine userId={profile.id} />
         </div>
       )}
 
