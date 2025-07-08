@@ -4,6 +4,7 @@ import userRoutes from "./routes/usersRoutes";
 import clientRoutes from "./routes/clientRoutes";
 import authRoutes from "./routes/authRoutes";
 import adminRoutes from "./routes/adminRoutes";
+import routinesRoutes from "./routes/routinesRoutes";
 import cors from "cors";
 import dotenv from "dotenv";
 import { createDefaultAdmin } from "./utils/initAdmin";
@@ -18,6 +19,7 @@ app.use("/users", userRoutes);
 app.use("/client", clientRoutes);
 app.use("/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/routines", routinesRoutes);
 
 const PORT = process.env.PORT || 3000;
 

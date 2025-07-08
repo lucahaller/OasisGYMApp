@@ -32,7 +32,7 @@ router.patch(
   "/mynotifications/:id/read",
   authenticateToken,
   authorizeRole("USER"),
-  async (req, res) => {
+  asyncHandler(async (req, res) => {
     const userId = req.user.id;
     const notificationId = Number(req.params.id);
 
@@ -52,7 +52,7 @@ router.patch(
     } catch (error) {
       res.status(500).json({ error: "Error al marcar como leída" });
     }
-  }
+  })
 );
 
 export default router;

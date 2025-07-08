@@ -4,6 +4,7 @@ import axios from "axios";
 import PaymentModal from "../../components/PaymentModal";
 import DeleteModal from "../../components/DeleteModal";
 import { FaEdit } from "react-icons/fa";
+import AssignRoutine from "../../components/routinesComponents/AssignRoutine";
 
 export default function UserDashboard({ data, goBack }) {
   const [formData, setFormData] = useState({
@@ -261,7 +262,9 @@ export default function UserDashboard({ data, goBack }) {
           )}
         </div>
       </div>
-
+      <div>
+        <AssignRoutine userId={data.id} />
+      </div>
       {message && <p className="text-green-600 mt-4">{message}</p>}
       {error && <p className="text-red-600 mt-4">{error}</p>}
     </div>
