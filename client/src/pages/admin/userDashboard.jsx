@@ -6,6 +6,7 @@ import DeleteModal from "../../components/DeleteModal";
 import { FaEdit } from "react-icons/fa";
 import AssignRoutine from "../../components/routinesComponents/AssignRoutine";
 import EvaluationForm from "../../components/routinesComponents/EvaluationForm";
+import UserRoutineFlow from "../../components/routinesComponents/UserRoutineFlow";
 
 export default function UserDashboard({ data, goBack }) {
   const [formData, setFormData] = useState({
@@ -264,8 +265,7 @@ export default function UserDashboard({ data, goBack }) {
         </div>
       </div>
       <div>
-        <AssignRoutine userId={data.id} />
-        <EvaluationForm userId={data.id} />
+        <UserRoutineFlow userId={data.id} paymentStatus={data.payment_status} />
       </div>
       {message && <p className="text-green-600 mt-4">{message}</p>}
       {error && <p className="text-red-600 mt-4">{error}</p>}

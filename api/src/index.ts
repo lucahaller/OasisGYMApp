@@ -8,6 +8,7 @@ import routinesRoutes from "./routes/routinesRoutes";
 import cors from "cors";
 import dotenv from "dotenv";
 import { createDefaultAdmin } from "./utils/initAdmin";
+import { initRoutineBases } from "./utils/initRoutines";
 
 dotenv.config();
 
@@ -24,7 +25,8 @@ app.use("/routines", routinesRoutes);
 const PORT = process.env.PORT || 3000;
 
 const main = async () => {
-  await createDefaultAdmin(); // ✅ Esperar a que se cree el admin
+  await createDefaultAdmin();
+  await initRoutineBases();
   app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
   });

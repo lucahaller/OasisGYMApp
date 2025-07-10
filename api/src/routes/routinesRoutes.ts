@@ -11,6 +11,8 @@ import {
   evaluateUserRoutine,
   getUserRoutineExercises,
   getEvaluatedRoutineFile,
+  getUserRoutineStatus,
+  getLastEvaluatedRoutines,
 } from "../controllers/routinesController";
 import { upload } from "../middleware/uploadMiddleware";
 const router = express.Router();
@@ -64,8 +66,21 @@ router.post(
 router.get(
   "/user/:userId/evaluated-download",
   authenticateToken,
-  authorizeRole("USER"),
+  authorizeRole("USER", "ADMIN"),
   asyncHandler(getEvaluatedRoutineFile)
+);
+router.get(
+  "/user/:userId/status",
+  authenticateToken,
+  authorizeRole("ADMIN"),
+  asyncHandler(getUserRoutineStatus)
+);
+
+router.get(
+  "/user/:userId/evaluated/all",
+  authenticateToken,
+  authorizeRole("ADMIN"),
+  asyncHandler(getLastEvaluatedRoutines)
 );
 
 export default router;

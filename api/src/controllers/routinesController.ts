@@ -229,8 +229,6 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
         )
       : null;
 
-    console.log("Ruta a archivo:", baseFilePath);
-
     if (!baseFilePath || !fs.existsSync(baseFilePath)) {
       return res
         .status(404)
@@ -240,23 +238,43 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
     const workbook = xlsx.readFile(baseFilePath);
     const sheetName = workbook.SheetNames[2];
     const sheet = workbook.Sheets[sheetName];
-    const rows = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: "" });
 
-    for (let i = 6; i < rows.length; i++) {
-      const nombreEjercicio = rows[i][1];
-      if (!nombreEjercicio) continue;
+    // 🚀 Recorremos desde la fila 7 (índice humano) hasta que no haya más ejercicios
+    for (let row = 7; ; row++) {
+      const cellEjercicio = sheet[`B${row}`];
+      if (!cellEjercicio || !cellEjercicio.v) break;
+
+      const nombreEjercicio = cellEjercicio.v
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, ""); // sin tildes
+
+      // Saltar títulos o filas no relevantes
+      if (
+        nombreEjercicio === "ejercicio" ||
+        nombreEjercicio === "grupo" ||
+        nombreEjercicio === "" ||
+        nombreEjercicio.length < 3
+      )
+        continue;
 
       const evaluado = ejercicios.find(
-        (e: any) => e.ejercicio === nombreEjercicio
+        (e: any) =>
+          e.ejercicio
+            .toString()
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") === nombreEjercicio
       );
+
       if (evaluado) {
-        const rmCalculado = calculateRM(evaluado.peso, evaluado.reps);
-        rows[i][2] = rmCalculado;
+        const rm = calculateRM(evaluado.peso, evaluado.reps);
+        sheet[`C${row}`] = { t: "n", v: rm };
       }
     }
-
-    const newSheet = xlsx.utils.aoa_to_sheet(rows);
-    workbook.Sheets[sheetName] = newSheet;
 
     const evaluatedFileName = `${userId}-${Date.now()}-evaluated.xlsx`;
     const savePath = path.resolve(
@@ -279,6 +297,27 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
         updatedAt: new Date(),
       },
     });
+
+    // 🔥 Limpiar viejas evaluaciones (guardar solo 2 últimas)
+    const oldEvaluations = await prisma.routineAssignment.findMany({
+      where: {
+        userId: Number(userId),
+        evaluated: true,
+        id: { not: assignment.id },
+      },
+      orderBy: { updatedAt: "desc" },
+      skip: 2,
+    });
+
+    for (const old of oldEvaluations) {
+      const oldFilePath = path.join(
+        process.cwd(),
+        "uploads/routines",
+        old.customFile || ""
+      );
+      if (fs.existsSync(oldFilePath)) fs.unlinkSync(oldFilePath);
+      await prisma.routineAssignment.delete({ where: { id: old.id } });
+    }
 
     res.json({
       message: "Evaluación guardada correctamente",
@@ -320,5 +359,46 @@ export const getEvaluatedRoutineFile = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error al obtener archivo evaluado:", error);
     res.status(500).json({ message: "Error al obtener archivo evaluado" });
+  }
+};
+
+export const getUserRoutineStatus = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  try {
+    const assignment = await prisma.routineAssignment.findFirst({
+      where: { userId: Number(userId) },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!assignment) return res.json({ status: "no-assigned" });
+
+    if (assignment.evaluated) return res.json({ status: "evaluated" });
+
+    return res.json({ status: "assigned" });
+  } catch (error) {
+    console.error("Error al obtener estado de rutina:", error);
+    return res.status(500).json({ message: "Error interno" });
+  }
+};
+
+export const getLastEvaluatedRoutines = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  try {
+    const assignments = await prisma.routineAssignment.findMany({
+      where: {
+        userId: Number(userId),
+        evaluated: true,
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 2,
+      include: { routine: true },
+    });
+
+    res.json(assignments);
+  } catch (error) {
+    console.error("Error al obtener rutinas evaluadas:", error);
+    res.status(500).json({ message: "Error al obtener rutinas evaluadas" });
   }
 };
