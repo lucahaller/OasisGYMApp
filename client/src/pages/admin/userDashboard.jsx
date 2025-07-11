@@ -265,7 +265,12 @@ export default function UserDashboard({ data, goBack }) {
         </div>
       </div>
       <div>
-        <UserRoutineFlow userId={data.id} paymentStatus={data.payment_status} />
+        <UserRoutineFlow
+          userId={data.id}
+          paymentStatus={data.payment_status}
+          name={data?.name}
+          age={data.age}
+        />
       </div>
       {message && <p className="text-green-600 mt-4">{message}</p>}
       {error && <p className="text-red-600 mt-4">{error}</p>}

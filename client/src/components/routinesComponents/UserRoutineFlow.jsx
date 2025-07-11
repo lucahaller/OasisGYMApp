@@ -4,7 +4,7 @@ import AssignRoutine from "./AssignRoutine";
 import EvaluationForm from "./EvaluationForm";
 import DownloadEvaluatedRoutine from "../../pages/profile/DownloadEvaluatedRoutine";
 
-export default function UserRoutineFlow({ userId, paymentStatus }) {
+export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
   const [estado, setEstado] = useState("loading");
   const [showAssign, setShowAssign] = useState(false);
   const [showEvaluate, setShowEvaluate] = useState(false);
@@ -85,7 +85,7 @@ export default function UserRoutineFlow({ userId, paymentStatus }) {
       )}
 
       {estado === "assigned" && showEvaluate && (
-        <EvaluationForm userId={userId} />
+        <EvaluationForm userId={userId} name={name} age={age} />
       )}
 
       {/* Rutina evaluada */}

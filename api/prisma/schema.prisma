@@ -32,6 +32,7 @@ model RoutineAssignment {
   routineBaseId  Int?
   customFile     String?
   evaluated      Boolean       @default(false)
+  selfEvaluated  Boolean       @default(false)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 }

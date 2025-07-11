@@ -204,10 +204,9 @@ const calculateRM = (peso: number, reps: number) => {
 };
 export const evaluateUserRoutine = async (req: Request, res: Response) => {
   const { userId } = req.params;
-  const { ejercicios } = req.body; // [{ ejercicio, peso, reps }, ...]
+  const { ejercicios, nombre, edad } = req.body; // 💡 Pasamos también datos personales
 
   try {
-    // 1) Obtener asignación
     const assignment = await prisma.routineAssignment.findFirst({
       where: { userId: Number(userId) },
       orderBy: { createdAt: "desc" },
@@ -216,7 +215,6 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
     if (!assignment)
       return res.status(404).json({ message: "No tiene rutina" });
 
-    // 2) Ruta del archivo
     const fileUrl = assignment.customFile || assignment.routine!.fileUrl;
     const filePath = path.resolve(
       process.cwd(),
@@ -225,23 +223,36 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
     if (!fs.existsSync(filePath))
       return res.status(404).json({ message: "Archivo no encontrado" });
 
-    // 3) Leer workbook y hoja 3
     const wb = xlsx.readFile(filePath);
     const sheetName = wb.SheetNames[2];
     const sh = wb.Sheets[sheetName];
 
-    // 4) Leer ejercicios de la hoja (como antes)
+    // ✅ AGREGADO: Insertar datos personales si existen
+    const etiquetas = {
+      NOMBRE: nombre || "",
+      FECHA: new Date().toLocaleDateString("es-AR"),
+      EDAD: edad || "",
+    };
+
+    for (let i = 1; i <= 10; i++) {
+      const keyCell = sh[`A${i}`];
+      if (!keyCell) continue;
+
+      const label = keyCell.v?.toString().trim().toUpperCase();
+      if (etiquetas[label]) {
+        sh[`B${i}`] = { t: "s", v: etiquetas[label].toString() };
+      }
+    }
+
+    // 🧠 Setear RM en columna C como ya venías haciendo
     const rows: any[][] = xlsx.utils.sheet_to_json(sh, {
       header: 1,
       defval: "",
     });
 
-    // 5) Preparar columna de RM para escribir con sheet_add_aoa
-    //    Empezamos en fila 7 (índice 6). origin 'C7'.
     const rmCol: (number | string)[][] = [];
     for (let i = 6; i < rows.length; i++) {
       const nombre: string = (rows[i][1] || "").toString().trim().toLowerCase();
-      // ignorar títulos
       if (!nombre || nombre === "ejercicio" || nombre === "grupo") {
         rmCol.push([""]);
         continue;
@@ -256,21 +267,19 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
       }
     }
 
-    // 6) Escribir solo la columna C sin tocar lo demás
     xlsx.utils.sheet_add_aoa(sh, rmCol, { origin: "C7" });
 
-    // 7) Guardar archivo evaluado
     const evalName = `${userId}-${Date.now()}-evaluated.xlsx`;
     const saveDir = path.resolve(process.cwd(), "uploads/routines/evaluations");
     if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
     const savePath = path.join(saveDir, evalName);
     xlsx.writeFile(wb, savePath);
 
-    // 8) Actualizar db y limpiar viejas
     await prisma.routineAssignment.update({
       where: { id: assignment.id },
       data: { customFile: `evaluations/${evalName}`, evaluated: true },
     });
+
     const old = await prisma.routineAssignment.findMany({
       where: {
         userId: Number(userId),
@@ -367,5 +376,119 @@ export const getLastEvaluatedRoutines = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error al obtener rutinas evaluadas:", error);
     res.status(500).json({ message: "Error al obtener rutinas evaluadas" });
+  }
+};
+
+export const selfEvaluateRoutine = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const { ejercicios, nombre, edad } = req.body;
+
+  try {
+    const user = await prisma.users.findUnique({
+      where: { id: Number(userId) },
+    });
+
+    if (!user || user.payment_status === "red") {
+      return res
+        .status(403)
+        .json({ message: "Pago inactivo. No puede autoevaluarse." });
+    }
+
+    const lastSelfEval = await prisma.routineAssignment.findFirst({
+      where: { userId: Number(userId), selfEvaluated: true },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    if (lastSelfEval) {
+      const dias =
+        (Date.now() - new Date(lastSelfEval.updatedAt).getTime()) /
+        (1000 * 60 * 60 * 24);
+      if (dias < 30) {
+        return res.status(403).json({
+          message: `Ya realizaste una autoevaluación hace menos de 30 días. Intenta en ${Math.ceil(
+            30 - dias
+          )} días.`,
+        });
+      }
+    }
+
+    const assignment = await prisma.routineAssignment.findFirst({
+      where: { userId: Number(userId), evaluated: true },
+      orderBy: { createdAt: "desc" },
+      include: { routine: true },
+    });
+
+    if (!assignment)
+      return res
+        .status(404)
+        .json({ message: "No se encontró rutina evaluada base" });
+
+    const fileUrl = assignment.customFile || assignment.routine!.fileUrl;
+    const filePath = path.resolve(
+      process.cwd(),
+      fileUrl.replace(/^\/public\//, "public/")
+    );
+
+    if (!fs.existsSync(filePath)) {
+      return res
+        .status(404)
+        .json({ message: "Archivo de rutina no encontrado" });
+    }
+
+    const wb = xlsx.readFile(filePath);
+    const sheetName = wb.SheetNames[2];
+    const sh = wb.Sheets[sheetName];
+    const rows: any[][] = xlsx.utils.sheet_to_json(sh, {
+      header: 1,
+      defval: "",
+    });
+
+    const rmCol: (number | string)[][] = [];
+    for (let i = 6; i < rows.length; i++) {
+      const nombreEj = (rows[i][1] || "").toString().trim().toLowerCase();
+      if (!nombreEj || nombreEj === "ejercicio" || nombreEj === "grupo") {
+        rmCol.push([""]);
+        continue;
+      }
+
+      const match = ejercicios.find(
+        (e: any) => e.ejercicio.toLowerCase().trim() === nombreEj
+      );
+      if (match) {
+        rmCol.push([calculateRM(match.peso, match.reps)]);
+      } else {
+        rmCol.push([""]);
+      }
+    }
+
+    xlsx.utils.sheet_add_aoa(sh, rmCol, { origin: "C7" });
+
+    // Extra: Agregar nombre y edad al principio si existe
+    if (nombre) sh["B2"] = { t: "s", v: nombre };
+    if (edad) sh["B4"] = { t: "s", v: `${edad}` };
+    sh["B3"] = { t: "s", v: new Date().toLocaleDateString("es-AR") };
+
+    const evalName = `${userId}-${Date.now()}-self-evaluated.xlsx`;
+    const saveDir = path.resolve(process.cwd(), "uploads/routines/evaluations");
+    if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
+    const savePath = path.join(saveDir, evalName);
+    xlsx.writeFile(wb, savePath);
+
+    const nuevaRutina = await prisma.routineAssignment.create({
+      data: {
+        userId: Number(userId),
+        evaluated: true,
+        selfEvaluated: true,
+        customFile: `evaluations/${evalName}`,
+      },
+    });
+
+    res.json({
+      message: "Autoevaluación completada con éxito",
+      evaluatedFile: `evaluations/${evalName}`,
+    });
+  } catch (err) {
+    console.error("❌ Error al autoevaluar:", err);
+    res.status(500).json({ message: "Error al autoevaluar rutina" });
   }
 };
