@@ -202,104 +202,76 @@ const calculateRM = (peso: number, reps: number) => {
   const porcentaje = percentageTable[reps] || 69;
   return Math.round((peso * 100) / porcentaje);
 };
-
 export const evaluateUserRoutine = async (req: Request, res: Response) => {
   const { userId } = req.params;
-  const { ejercicios } = req.body;
+  const { ejercicios } = req.body; // [{ ejercicio, peso, reps }, ...]
 
   try {
+    // 1) Obtener asignación
     const assignment = await prisma.routineAssignment.findFirst({
       where: { userId: Number(userId) },
       orderBy: { createdAt: "desc" },
       include: { routine: true },
     });
+    if (!assignment)
+      return res.status(404).json({ message: "No tiene rutina" });
 
-    if (!assignment) {
-      return res
-        .status(404)
-        .json({ message: "No se encontró rutina asignada" });
-    }
+    // 2) Ruta del archivo
+    const fileUrl = assignment.customFile || assignment.routine!.fileUrl;
+    const filePath = path.resolve(
+      process.cwd(),
+      fileUrl.replace(/^\/public\//, "public/")
+    );
+    if (!fs.existsSync(filePath))
+      return res.status(404).json({ message: "Archivo no encontrado" });
 
-    const baseFilePath = assignment.customFile
-      ? path.resolve(process.cwd(), "uploads/routines", assignment.customFile)
-      : assignment.routine?.fileUrl
-      ? path.resolve(
-          process.cwd(),
-          assignment.routine.fileUrl.replace(/^\/?public\//, "public/")
-        )
-      : null;
+    // 3) Leer workbook y hoja 3
+    const wb = xlsx.readFile(filePath);
+    const sheetName = wb.SheetNames[2];
+    const sh = wb.Sheets[sheetName];
 
-    if (!baseFilePath || !fs.existsSync(baseFilePath)) {
-      return res
-        .status(404)
-        .json({ message: "Archivo de rutina no encontrado" });
-    }
+    // 4) Leer ejercicios de la hoja (como antes)
+    const rows: any[][] = xlsx.utils.sheet_to_json(sh, {
+      header: 1,
+      defval: "",
+    });
 
-    const workbook = xlsx.readFile(baseFilePath);
-    const sheetName = workbook.SheetNames[2];
-    const sheet = workbook.Sheets[sheetName];
-
-    // 🚀 Recorremos desde la fila 7 (índice humano) hasta que no haya más ejercicios
-    for (let row = 7; ; row++) {
-      const cellEjercicio = sheet[`B${row}`];
-      if (!cellEjercicio || !cellEjercicio.v) break;
-
-      const nombreEjercicio = cellEjercicio.v
-        .toString()
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, ""); // sin tildes
-
-      // Saltar títulos o filas no relevantes
-      if (
-        nombreEjercicio === "ejercicio" ||
-        nombreEjercicio === "grupo" ||
-        nombreEjercicio === "" ||
-        nombreEjercicio.length < 3
-      )
+    // 5) Preparar columna de RM para escribir con sheet_add_aoa
+    //    Empezamos en fila 7 (índice 6). origin 'C7'.
+    const rmCol: (number | string)[][] = [];
+    for (let i = 6; i < rows.length; i++) {
+      const nombre: string = (rows[i][1] || "").toString().trim().toLowerCase();
+      // ignorar títulos
+      if (!nombre || nombre === "ejercicio" || nombre === "grupo") {
+        rmCol.push([""]);
         continue;
-
-      const evaluado = ejercicios.find(
-        (e: any) =>
-          e.ejercicio
-            .toString()
-            .trim()
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "") === nombreEjercicio
+      }
+      const encontrado = ejercicios.find(
+        (e: any) => e.ejercicio.toLowerCase().trim() === nombre
       );
-
-      if (evaluado) {
-        const rm = calculateRM(evaluado.peso, evaluado.reps);
-        sheet[`C${row}`] = { t: "n", v: rm };
+      if (encontrado) {
+        rmCol.push([calculateRM(encontrado.peso, encontrado.reps)]);
+      } else {
+        rmCol.push([""]);
       }
     }
 
-    const evaluatedFileName = `${userId}-${Date.now()}-evaluated.xlsx`;
-    const savePath = path.resolve(
-      process.cwd(),
-      "uploads/routines/evaluations",
-      evaluatedFileName
-    );
+    // 6) Escribir solo la columna C sin tocar lo demás
+    xlsx.utils.sheet_add_aoa(sh, rmCol, { origin: "C7" });
 
-    if (!fs.existsSync(path.dirname(savePath))) {
-      fs.mkdirSync(path.dirname(savePath), { recursive: true });
-    }
+    // 7) Guardar archivo evaluado
+    const evalName = `${userId}-${Date.now()}-evaluated.xlsx`;
+    const saveDir = path.resolve(process.cwd(), "uploads/routines/evaluations");
+    if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
+    const savePath = path.join(saveDir, evalName);
+    xlsx.writeFile(wb, savePath);
 
-    xlsx.writeFile(workbook, savePath);
-
+    // 8) Actualizar db y limpiar viejas
     await prisma.routineAssignment.update({
       where: { id: assignment.id },
-      data: {
-        customFile: `evaluations/${evaluatedFileName}`,
-        evaluated: true,
-        updatedAt: new Date(),
-      },
+      data: { customFile: `evaluations/${evalName}`, evaluated: true },
     });
-
-    // 🔥 Limpiar viejas evaluaciones (guardar solo 2 últimas)
-    const oldEvaluations = await prisma.routineAssignment.findMany({
+    const old = await prisma.routineAssignment.findMany({
       where: {
         userId: Number(userId),
         evaluated: true,
@@ -308,23 +280,18 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
       orderBy: { updatedAt: "desc" },
       skip: 2,
     });
-
-    for (const old of oldEvaluations) {
-      const oldFilePath = path.join(
-        process.cwd(),
-        "uploads/routines",
-        old.customFile || ""
-      );
-      if (fs.existsSync(oldFilePath)) fs.unlinkSync(oldFilePath);
-      await prisma.routineAssignment.delete({ where: { id: old.id } });
+    for (const o of old) {
+      const p = path.join(process.cwd(), "uploads/routines", o.customFile!);
+      if (fs.existsSync(p)) fs.unlinkSync(p);
+      await prisma.routineAssignment.delete({ where: { id: o.id } });
     }
 
-    res.json({
-      message: "Evaluación guardada correctamente",
-      evaluatedFile: `evaluations/${evaluatedFileName}`,
+    return res.json({
+      message: "Evaluación guardada",
+      evaluatedFile: `evaluations/${evalName}`,
     });
-  } catch (error) {
-    console.error("Error al evaluar rutina:", error);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Error al evaluar rutina" });
   }
 };
