@@ -7,6 +7,7 @@ import ModalRegister from "../../components/ModalRegister";
 import { useDispatch } from "react-redux";
 import { register } from "../../actions/authActions";
 import NotificationBell from "../../components/NotificationBell";
+import EvaluationRequestsAdmin from "./EvaluationRequestsAdmin";
 
 export default function MainAdmin() {
   const [profile, setProfile] = useState(null);
@@ -14,12 +15,14 @@ export default function MainAdmin() {
   const [users, setUsers] = useState(null);
   const [showUser, setShowUser] = useState(false);
   const [user, setUser] = useState(null);
+  const [showEvaluationRequests, setShowEvaluationRequests] = useState(false);
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const dispatch = useDispatch();
   const [count, setCount] = useState(0);
   const [refreshNotifications, setRefreshNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
+
   const handleRegister = async (formData) => {
     try {
       await dispatch(register(formData));
@@ -38,9 +41,7 @@ export default function MainAdmin() {
 
     axios
       .get("http://localhost:3000/admin/dashboard", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setProfile(res.data))
       .catch((err) => {
@@ -60,7 +61,6 @@ export default function MainAdmin() {
         setError("No se pudo cargar los usuarios.");
       });
 
-    // 🔔 Traer notificaciones automáticamente
     axios
       .get("http://localhost:3000/users/notifications", {
         headers: {
@@ -80,7 +80,7 @@ export default function MainAdmin() {
     return <div className="text-red-600 text-center mt-10">{error}</div>;
   if (!profile)
     return <div className="text-center mt-10">Cargando perfil...</div>;
-  console.log(users);
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="sticky top-0 z-10 bg-white border-b px-6 py-4 flex items-center justify-between shadow-sm">
@@ -96,18 +96,27 @@ export default function MainAdmin() {
       </header>
 
       <main className="flex-1 px-6 py-4">
-        {!showUser ? (
+        {showEvaluationRequests ? (
+          <EvaluationRequestsAdmin
+            goBack={() => setShowEvaluationRequests(false)}
+          />
+        ) : !showUser ? (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-700">
-                Usuarios Registrados
-              </h2>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded"
-              >
-                Registrar nuevo usuario
-              </button>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-green-600 text-white px-4 py-2 rounded"
+                >
+                  Registrar nuevo usuario
+                </button>
+                <button
+                  onClick={() => setShowEvaluationRequests(true)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  Ver peticiones de evaluación
+                </button>
+              </div>
             </div>
 
             <ModalRegister

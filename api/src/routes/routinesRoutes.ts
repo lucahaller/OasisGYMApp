@@ -13,6 +13,8 @@ import {
   getEvaluatedRoutineFile,
   getUserRoutineStatus,
   getLastEvaluatedRoutines,
+  selfEvaluateRoutine,
+  getSelfEvaluatedStatus,
 } from "../controllers/routinesController";
 import { upload } from "../middleware/uploadMiddleware";
 const router = express.Router();
@@ -83,4 +85,16 @@ router.get(
   asyncHandler(getLastEvaluatedRoutines)
 );
 
+router.post(
+  "/user/:userId/evaluate/self",
+  authenticateToken,
+  authorizeRole("USER"),
+  asyncHandler(selfEvaluateRoutine)
+);
+router.get(
+  "/user/:userId/selfevaluated",
+  authenticateToken,
+  authorizeRole("USER"),
+  asyncHandler(getSelfEvaluatedStatus)
+);
 export default router;

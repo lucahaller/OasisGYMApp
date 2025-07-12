@@ -6,6 +6,9 @@ import { FaBell } from "react-icons/fa";
 import ClientNotificationBell from "../../components/ClientNotificationsBell";
 import Swal from "sweetalert2";
 import DownloadEvaluatedRoutine from "./DownloadEvaluatedRoutine";
+import EvaluationForm from "../../components/routinesComponents/EvaluationForm";
+import SelfEvaluationForm from "../../components/routinesComponents/SelfEvaluationForm";
+import RequestEvaluation from "../../components/routinesComponents/RequestEvaluation";
 
 export default function MainProfile() {
   const [profile, setProfile] = useState(null);
@@ -213,15 +216,27 @@ export default function MainProfile() {
         </div>
       )}
 
-      {tab === "evaluacion" && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Evaluación
-          </h3>
-          <p className="text-gray-600">
-            Aquí podrás evaluar tu progreso una vez tengas rutinas.
-          </p>
-        </div>
+      {tab === "evaluacion" && profile?.id && profile?.age && profile?.name ? (
+        <RequestEvaluation userId={profile.id}>
+          {(request) =>
+            request.approved ? (
+              <SelfEvaluationForm
+                userId={profile.id}
+                age={profile.age}
+                name={profile.name}
+                requestId={request.id}
+              />
+            ) : (
+              <p className="text-sm text-yellow-600">
+                Tu solicitud está pendiente de aprobación.
+              </p>
+            )
+          }
+        </RequestEvaluation>
+      ) : (
+        <p className="text-gray-500 text-sm">
+          Para evaluar, necesitás tener edad y nombre cargado en tu perfil.
+        </p>
       )}
     </div>
   );

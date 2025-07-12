@@ -21,6 +21,7 @@ app.use("/client", clientRoutes);
 app.use("/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/routines", routinesRoutes);
+app.use("/evaluation-requests", routinesRoutes);
 
 const PORT = process.env.PORT || 3000;
 

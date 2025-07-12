@@ -492,3 +492,26 @@ export const selfEvaluateRoutine = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error al autoevaluar rutina" });
   }
 };
+
+export const getSelfEvaluatedStatus = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  try {
+    const assignment = await prisma.routineAssignment.findFirst({
+      where: {
+        userId: Number(userId),
+        evaluated: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!assignment) {
+      return res.json({ selfEvaluated: false });
+    }
+
+    return res.json({ selfEvaluated: assignment.selfEvaluated || false });
+  } catch (error) {
+    console.error("Error al obtener estado de selfEvaluated:", error);
+    return res.status(500).json({ message: "Error al consultar evaluación" });
+  }
+};
