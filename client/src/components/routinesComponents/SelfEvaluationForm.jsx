@@ -59,7 +59,7 @@ export default function SelfEvaluationForm({ userId, name, age, requestId }) {
   const handleSaveProgress = async () => {
     try {
       await axios.patch(
-        `http://localhost:3000/evaluation-requests/${requestId}/save`,
+        `http://localhost:3000/evaluationrequests/${requestId}/save`,
         { progress: values },
         { headers: { Authorization: `Bearer ${token}` } }
       );

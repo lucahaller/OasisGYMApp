@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import "./types/express";
+// import "./types/express";
 const prisma = new PrismaClient();
 
 // 1. Crear solicitud de evaluación

@@ -10,7 +10,7 @@ export default function RequestEvaluation({ userId, children }) {
   const fetchRequestStatus = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:3000/evaluation-requests/user/${userId}`,
+        `http://localhost:3000/evaluationrequests/user/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -24,7 +24,7 @@ export default function RequestEvaluation({ userId, children }) {
   const handleRequest = async () => {
     try {
       await axios.post(
-        `http://localhost:3000/evaluation-requests`,
+        `http://localhost:3000/evaluationrequests`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

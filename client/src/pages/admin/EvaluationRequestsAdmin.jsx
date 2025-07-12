@@ -11,7 +11,7 @@ export default function EvaluationRequestsAdmin({ goBack }) {
       const token = localStorage.getItem("token");
       try {
         const res = await axios.get(
-          "http://localhost:3000/evaluation-requests/user/0",
+          "http://localhost:3000/evaluationrequests/user/all",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -28,12 +28,12 @@ export default function EvaluationRequestsAdmin({ goBack }) {
 
     fetchRequests();
   }, []);
-
+  console.log(requests);
   const handleApprove = async (id) => {
     const token = localStorage.getItem("token");
     try {
       await axios.patch(
-        `http://localhost:3000/evaluation-requests/${id}/approve`,
+        `http://localhost:3000/evaluationrequests/${id}/approve`,
         {},
         {
           headers: {

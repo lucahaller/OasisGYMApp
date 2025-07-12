@@ -219,7 +219,7 @@ export default function MainProfile() {
       {tab === "evaluacion" && profile?.id && profile?.age && profile?.name ? (
         <RequestEvaluation userId={profile.id}>
           {(request) =>
-            request.approved ? (
+            request.status === "aprobada" ? (
               <SelfEvaluationForm
                 userId={profile.id}
                 age={profile.age}

@@ -14,21 +14,22 @@ const router = express.Router();
 router.post(
   "/",
   authenticateToken,
-  authorizeRole("USER"),
+
   asyncHandler(createEvaluationRequest)
 );
 
 router.get(
-  "/user/:userId",
-  authenticateToken,
-  authorizeRole("ADMIN", "USER"),
-  asyncHandler(getUserEvaluationRequests)
-);
-router.get(
-  "/user/all",
+  "/user/all", // ✅ primero
   authenticateToken,
   authorizeRole("ADMIN"),
   asyncHandler(getAllEvaluationRequests)
+);
+
+router.get(
+  "/user/:userId", // ⬅ después
+  authenticateToken,
+  authorizeRole("ADMIN", "USER"),
+  asyncHandler(getUserEvaluationRequests)
 );
 
 router.patch(
