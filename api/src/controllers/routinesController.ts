@@ -129,7 +129,6 @@ export const readRoutineExcel = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error al leer la planilla" });
   }
 };
-
 export const getUserRoutineExercises = async (req: Request, res: Response) => {
   const { userId } = req.params;
 
@@ -145,20 +144,25 @@ export const getUserRoutineExercises = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "No tiene rutina asignada" });
     }
 
-    // Obtenemos la ruta del archivo
-    const fileRelativePath =
-      assignment.customFile || assignment.routine?.fileUrl;
-    if (!fileRelativePath) {
+    // Obtenemos la ruta del archivo: si hay customFile, se asume que es evaluado y
+    // se encuentra en "uploads/routines", sino se usa la fileUrl de la rutina base.
+    let filePath = "";
+    if (assignment.customFile) {
+      filePath = path.join(
+        process.cwd(),
+        "uploads/routines",
+        assignment.customFile
+      );
+    } else if (assignment.routine?.fileUrl) {
+      filePath = path.join(
+        process.cwd(),
+        assignment.routine.fileUrl.replace(/^\/public\//, "public/")
+      );
+    } else {
       return res
         .status(404)
         .json({ message: "Archivo de rutina no encontrado" });
     }
-
-    // Ajustar ruta absoluta según estructura tu proyecto
-    const filePath = path.join(
-      process.cwd(),
-      fileRelativePath.replace(/^\/public\//, "public/")
-    );
 
     if (!fs.existsSync(filePath)) {
       return res
@@ -172,7 +176,7 @@ export const getUserRoutineExercises = async (req: Request, res: Response) => {
 
     const exercises = [];
     for (let i = 6; i < jsonData.length; i++) {
-      const nombreEjercicio = jsonData[i][1]; // Columna B, fila i+1 (índice 1)
+      const nombreEjercicio = jsonData[i][1]; // Columna B
       if (nombreEjercicio) {
         exercises.push({ name: nombreEjercicio });
       }

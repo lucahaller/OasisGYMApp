@@ -127,3 +127,34 @@ export const getAllEvaluationRequests = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error del servidor" });
   }
 };
+
+export const getActiveEvaluation = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  if (!req.user) {
+    return res.status(401).json({ message: "No autenticado" });
+  }
+
+  if (req.user.role === "USER" && req.user.id !== parseInt(userId)) {
+    return res.status(403).json({ message: "Acceso no autorizado" });
+  }
+
+  try {
+    const evaluation = await prisma.evaluationRequest.findFirst({
+      where: {
+        userId: parseInt(userId),
+        status: { in: ["pendiente", "aprobada"] },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!evaluation) {
+      return res.json({ ejercicios: [] }); // No hay evaluación activa
+    }
+
+    res.json(evaluation);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener evaluación" });
+  }
+};

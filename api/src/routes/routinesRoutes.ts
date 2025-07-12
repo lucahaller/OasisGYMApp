@@ -54,7 +54,7 @@ router.post(
 router.get(
   "/user/:userId/exercises",
   authenticateToken,
-  authorizeRole("ADMIN"),
+  authorizeRole("ADMIN", "USER"),
   asyncHandler(getUserRoutineExercises)
 );
 

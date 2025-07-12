@@ -5,6 +5,7 @@ import { authorizeRole } from "../middleware/authMiddlewareRole";
 import {
   approveEvaluationRequest,
   createEvaluationRequest,
+  getActiveEvaluation,
   getAllEvaluationRequests,
   getUserEvaluationRequests,
   saveEvaluationProgress,
@@ -31,7 +32,12 @@ router.get(
   authorizeRole("ADMIN", "USER"),
   asyncHandler(getUserEvaluationRequests)
 );
-
+router.get(
+  "/user/:userId/active", // ✅ primero
+  authenticateToken,
+  authorizeRole("USER"),
+  asyncHandler(getActiveEvaluation)
+);
 router.patch(
   "/:id/save",
   authenticateToken,
