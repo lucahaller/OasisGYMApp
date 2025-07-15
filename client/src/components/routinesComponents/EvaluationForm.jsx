@@ -19,7 +19,7 @@ const calculateRM = (peso, reps) => {
   return Math.round((peso * 100) / porcentaje);
 };
 
-export default function EvaluationForm({ userId }) {
+export default function EvaluationForm({ userId, name, age }) {
   const [exercises, setExercises] = useState([]);
   const [values, setValues] = useState({});
   const [loading, setLoading] = useState(true);
@@ -117,7 +117,11 @@ export default function EvaluationForm({ userId }) {
 
       await axios.post(
         `http://localhost:3000/routines/user/${userId}/evaluate`,
-        { ejercicios: data },
+        {
+          ejercicios: data,
+          nombre: name,
+          edad: age,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
