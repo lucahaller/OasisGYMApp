@@ -41,6 +41,27 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
     }
   }, [estado]);
 
+  const handleDownload = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3000/routines/user/${userId}/evaluated-download`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob", // Importante para archivos
+        }
+      );
+
+      const blob = new Blob([response.data], {
+        type: response.headers["content-type"],
+      });
+      saveAs(blob, "rutina-evaluada.xlsx");
+    } catch (err) {
+      console.error("Error al descargar rutina evaluada", err);
+    }
+  };
+
   if (estado === "loading")
     return <p className="text-sm">Cargando rutina...</p>;
 
@@ -114,14 +135,14 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
                       {new Date(rutina.updatedAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-2">
-                      <a
-                        href={`http://localhost:3000/uploads/routines/${rutina.customFile}`}
+                      <button
+                        onClick={handleDownload}
                         target="_blank"
                         className="text-blue-600 underline"
                         rel="noreferrer"
                       >
                         Descargar
-                      </a>
+                      </button>
                     </td>
                   </tr>
                 ))}

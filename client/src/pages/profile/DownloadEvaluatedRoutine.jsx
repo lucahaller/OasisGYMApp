@@ -29,7 +29,7 @@ export default function DownloadEvaluatedRoutine({ userId }) {
       onClick={handleDownload}
       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mt-4"
     >
-      Ver rutina evaluada
+      Descargar rutina
     </button>
   );
 }

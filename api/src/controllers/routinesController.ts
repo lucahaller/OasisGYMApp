@@ -219,10 +219,29 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
     if (!assignment)
       return res.status(404).json({ message: "No tiene rutina" });
 
-    const fileUrl = assignment.customFile || assignment.routine!.fileUrl;
-    const filePath = path.resolve(process.cwd(), "uploads/routines", fileUrl);
-    if (!fs.existsSync(filePath))
+    let filePath = "";
+    if (assignment.customFile) {
+      // archivo evaluado (lo guardas en uploads/routines/evaluations)
+      filePath = path.join(
+        process.cwd(),
+        "uploads",
+        "routines",
+        assignment.customFile
+      );
+    } else if (assignment.routine?.fileUrl) {
+      // archivo base (fileUrl apunta a /public/…)
+      filePath = path.join(
+        process.cwd(),
+        assignment.routine.fileUrl.replace(/^\/public\//, "public/")
+      );
+    } else {
+      return res.status(404).json({ message: "No tiene rutina asignada" });
+    }
+
+    if (!fs.existsSync(filePath)) {
+      console.error("🔍 Buscando aquí:", filePath);
       return res.status(404).json({ message: "Archivo no encontrado" });
+    }
 
     const wb = xlsx.readFile(filePath);
     const sheetName = wb.SheetNames[2];

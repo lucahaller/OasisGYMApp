@@ -186,7 +186,6 @@ export const saveAdminEvaluationProgress = async (
   }
 
   try {
-    // Verificamos si ya existe una evaluación hecha por el admin (evaluatedByAdmin: true)
     let evaluation = await prisma.evaluationRequest.findFirst({
       where: {
         userId: Number(userId),
@@ -195,22 +194,17 @@ export const saveAdminEvaluationProgress = async (
     });
 
     if (evaluation) {
-      // Actualizamos la existente
       evaluation = await prisma.evaluationRequest.update({
         where: { id: evaluation.id },
-        data: {
-          data,
-          updatedAt: new Date(),
-        },
+        data: { data, updatedAt: new Date() },
       });
     } else {
-      // Creamos una nueva evaluación aprobada hecha por admin
       evaluation = await prisma.evaluationRequest.create({
         data: {
           userId: Number(userId),
-          status: "aprobada",
+          status: "aprobada", // ya viene aprobado
           data,
-          evaluatedByAdmin: true,
+          evaluatedByAdmin: true, // aquí marcamos el flag
         },
       });
     }
@@ -221,19 +215,25 @@ export const saveAdminEvaluationProgress = async (
     res.status(500).json({ message: "Error al guardar evaluación del admin" });
   }
 };
+
+// Antes: buscabas status:"admin" que nunca existe en tu enum de status
 export const getAdminEvaluationProgress = async (
   req: Request,
   res: Response
 ) => {
   const { userId } = req.params;
-
   try {
     const evaluation = await prisma.evaluationRequest.findFirst({
       where: {
         userId: Number(userId),
-        status: "admin", // ✅ Buscamos la evaluación hecha por el admin
+        // ← Ahora filtramos por el flag que marcaste verdadero cuando guardas
+        evaluatedByAdmin: true,
       },
       orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        data: true,
+      },
     });
 
     if (!evaluation) {
