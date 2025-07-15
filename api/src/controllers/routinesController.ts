@@ -314,7 +314,11 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
       if (fs.existsSync(p)) fs.unlinkSync(p);
       await prisma.routineAssignment.delete({ where: { id: o.id } });
     }
-
+    await prisma.evaluationRequest.deleteMany({
+      where: {
+        userId: Number(userId),
+      },
+    });
     return res.json({
       message: "Evaluación guardada",
       evaluatedFile: `evaluations/${evalName}`,

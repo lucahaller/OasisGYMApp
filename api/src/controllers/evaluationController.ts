@@ -216,7 +216,6 @@ export const saveAdminEvaluationProgress = async (
   }
 };
 
-// Antes: buscabas status:"admin" que nunca existe en tu enum de status
 export const getAdminEvaluationProgress = async (
   req: Request,
   res: Response
