@@ -15,131 +15,169 @@ const percentageTable = {
 };
 
 const calculateRM = (peso, reps) => {
-  const pct = percentageTable[reps] || 69;
-  return Math.round((peso * 100) / pct);
+  const porcentaje = percentageTable[reps] || 69;
+  return Math.round((peso * 100) / porcentaje);
 };
 
-export default function EvaluationForm({ userId, name, age }) {
-  const [exercises, setExercises] = useState([]); // lista de ejercicios
-  const [request, setRequest] = useState(null); // la evaluación activa
-  const [values, setValues] = useState({}); // { [ejercicio]: { peso, reps } }
+export default function EvaluationForm({ userId }) {
+  const [exercises, setExercises] = useState([]);
+  const [values, setValues] = useState({});
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    const fetchAll = async () => {
+    const fetchData = async () => {
       try {
-        // 1) ejercicios
-        const [exRes, evRes] = await Promise.all([
+        const [exercisesRes, savedRes] = await Promise.all([
           axios.get(`http://localhost:3000/routines/user/${userId}/exercises`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
           axios.get(
-            `http://localhost:3000/evaluationrequests/user/${userId}/active`,
-            { headers: { Authorization: `Bearer ${token}` } }
+            `http://localhost:3000/evaluationrequests/user/${userId}/admin`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
           ),
         ]);
 
-        setExercises(exRes.data);
+        setExercises(exercisesRes.data);
 
-        // 2) si hay evaluación activa, guardamos request y poblamos valores
-        if (evRes.data && evRes.data.id && Array.isArray(evRes.data.data)) {
-          setRequest(evRes.data);
-          // armar map de datos por nombre de ejercicio
-          const saved = {};
-          evRes.data.data.forEach((e) => {
-            saved[e.ejercicio] = {
-              peso: e.peso ?? "",
-              reps: e.reps ?? "",
+        const savedValues = {};
+        if (savedRes.data?.data?.length) {
+          savedRes.data.data.forEach((item, index) => {
+            savedValues[index] = {
+              peso: item.peso ?? "",
+              reps: item.reps ?? "",
             };
           });
-          setValues(saved);
         }
-      } catch (err) {
-        console.error("Error cargando ejercicios o evaluación:", err);
+
+        setValues(savedValues);
+      } catch (error) {
+        console.error("Error al cargar datos", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAll();
+    fetchData();
   }, [userId, token]);
 
-  const handleChange = (exerciseName, field, v) => {
+  const handleChange = (index, field, value) => {
     setValues((prev) => ({
       ...prev,
-      [exerciseName]: {
-        ...prev[exerciseName],
-        [field]: v,
+      [index]: {
+        ...prev[index],
+        [field]: value,
       },
     }));
   };
 
   const handleSave = async () => {
-    if (!request?.id) return;
     try {
-      // construir array en el mismo orden de exercises
-      const data = exercises.map((ex) => {
-        const { peso, reps } = values[ex.name] || {};
-        const rm = calculateRM(Number(peso), Number(reps));
+      setSaving(true);
+      const data = exercises.map((ex, index) => {
+        const { peso, reps } = values[index] || {};
         return {
           ejercicio: ex.name,
-          peso: peso ? Number(peso) : null,
-          reps: reps ? Number(reps) : null,
-          rm,
+          peso: Number(peso),
+          reps: Number(reps),
         };
       });
 
       await axios.patch(
-        `http://localhost:3000/evaluationrequests/${request.id}/save`,
+        `http://localhost:3000/evaluationrequests/user/${userId}/saveadmin`,
         { data },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setMessage("Progreso guardado correctamente");
+
+      setMessage("Progreso guardado correctamente ✅");
     } catch (err) {
-      console.error(err);
-      setMessage("Error al guardar el progreso");
+      console.error("Error al guardar:", err);
+      setMessage("Error al guardar el progreso ❌");
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) return <p className="text-sm">Cargando ejercicios...</p>;
+  const handleSubmit = async () => {
+    try {
+      const data = exercises.map((ex, index) => {
+        const { peso, reps } = values[index] || {};
+        const rm = calculateRM(peso, reps);
+        return {
+          ejercicio: ex.name,
+          peso: Number(peso),
+          reps: Number(reps),
+          rm,
+        };
+      });
+
+      await axios.post(
+        `http://localhost:3000/routines/user/${userId}/evaluate`,
+        { ejercicios: data },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setMessage("Evaluación enviada correctamente ✅");
+    } catch (err) {
+      console.error("Error al enviar evaluación:", err);
+      setMessage("Error al enviar la evaluación ❌");
+    }
+  };
+
+  if (loading) return <p>Cargando evaluación...</p>;
 
   return (
     <div className="mt-10 p-6 bg-white border rounded-md shadow">
-      <h3 className="text-xl font-semibold mb-4">Evaluación de rutina</h3>
+      <h3 className="text-xl font-semibold mb-4">Evaluación del Usuario</h3>
 
-      {exercises.map((ex) => (
+      {exercises.map((ex, index) => (
         <div
-          key={ex.name}
+          key={index}
           className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"
         >
-          <label className="block text-sm font-medium text-gray-700">
-            {ex.name}
-          </label>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              {ex.name}
+            </label>
+          </div>
           <input
             type="number"
             placeholder="Peso usado (kg)"
             className="border p-2 rounded-md w-full"
-            value={values[ex.name]?.peso ?? ""}
-            onChange={(e) => handleChange(ex.name, "peso", e.target.value)}
+            value={values[index]?.peso ?? ""}
+            onChange={(e) => handleChange(index, "peso", e.target.value)}
           />
           <input
             type="number"
             placeholder="Reps logradas"
             className="border p-2 rounded-md w-full"
-            value={values[ex.name]?.reps ?? ""}
-            onChange={(e) => handleChange(ex.name, "reps", e.target.value)}
+            value={values[index]?.reps ?? ""}
+            onChange={(e) => handleChange(index, "reps", e.target.value)}
           />
         </div>
       ))}
 
-      <button
-        onClick={handleSave}
-        className="mt-4 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded"
-      >
-        Guardar progreso
-      </button>
+      <div className="flex gap-4 mt-4">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
+        >
+          {saving ? "Guardando..." : "Guardar Progreso"}
+        </button>
+
+        <button
+          onClick={handleSubmit}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
+        >
+          Enviar Evaluación
+        </button>
+      </div>
+
       {message && <p className="mt-3 text-sm text-gray-700">{message}</p>}
     </div>
   );

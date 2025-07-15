@@ -106,6 +106,9 @@ export const approveEvaluationRequest = async (req: Request, res: Response) => {
 export const getAllEvaluationRequests = async (req: Request, res: Response) => {
   try {
     const requests = await prisma.evaluationRequest.findMany({
+      where: {
+        evaluatedByAdmin: false, // 👈 filtrar si no querés mostrar autoevaluaciones de admin
+      },
       orderBy: { createdAt: "desc" },
       include: {
         user: {
@@ -131,9 +134,7 @@ export const getAllEvaluationRequests = async (req: Request, res: Response) => {
 export const getActiveEvaluation = async (req: Request, res: Response) => {
   const { userId } = req.params;
 
-  if (!req.user) {
-    return res.status(401).json({ message: "No autenticado" });
-  }
+  if (!req.user) return res.status(401).json({ message: "No autenticado" });
 
   if (req.user.role === "USER" && req.user.id !== parseInt(userId)) {
     return res.status(403).json({ message: "Acceso no autorizado" });
@@ -144,17 +145,108 @@ export const getActiveEvaluation = async (req: Request, res: Response) => {
       where: {
         userId: parseInt(userId),
         status: { in: ["pendiente", "aprobada"] },
+        evaluatedByAdmin: false, // 👈 filtrar evaluaciones hechas por admin
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        data: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!evaluation) {
+      return res.json({ id: null, data: [] });
+    }
+
+    const parsedData = Array.isArray(evaluation.data) ? evaluation.data : [];
+
+    return res.json({
+      id: evaluation.id,
+      data: parsedData,
+    });
+  } catch (error) {
+    console.error("Error al obtener evaluación:", error);
+    res.status(500).json({ message: "Error al obtener evaluación" });
+  }
+};
+
+// ✅ Guardar progreso de evaluación desde el ADMIN sin restricción de estado
+export const saveAdminEvaluationProgress = async (
+  req: Request,
+  res: Response
+) => {
+  const { userId } = req.params;
+  const { data } = req.body;
+
+  if (!Array.isArray(data)) {
+    return res.status(400).json({ message: "Datos inválidos" });
+  }
+
+  try {
+    // Verificamos si ya existe una evaluación hecha por el admin (evaluatedByAdmin: true)
+    let evaluation = await prisma.evaluationRequest.findFirst({
+      where: {
+        userId: Number(userId),
+        evaluatedByAdmin: true,
+      },
+    });
+
+    if (evaluation) {
+      // Actualizamos la existente
+      evaluation = await prisma.evaluationRequest.update({
+        where: { id: evaluation.id },
+        data: {
+          data,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      // Creamos una nueva evaluación aprobada hecha por admin
+      evaluation = await prisma.evaluationRequest.create({
+        data: {
+          userId: Number(userId),
+          status: "aprobada",
+          data,
+          evaluatedByAdmin: true,
+        },
+      });
+    }
+
+    return res.json({ message: "Progreso del admin guardado", evaluation });
+  } catch (error) {
+    console.error("Error al guardar progreso admin:", error);
+    res.status(500).json({ message: "Error al guardar evaluación del admin" });
+  }
+};
+export const getAdminEvaluationProgress = async (
+  req: Request,
+  res: Response
+) => {
+  const { userId } = req.params;
+
+  try {
+    const evaluation = await prisma.evaluationRequest.findFirst({
+      where: {
+        userId: Number(userId),
+        status: "admin", // ✅ Buscamos la evaluación hecha por el admin
       },
       orderBy: { createdAt: "desc" },
     });
 
     if (!evaluation) {
-      return res.json({ ejercicios: [] }); // No hay evaluación activa
+      return res.json({ id: null, data: [] });
     }
 
-    res.json(evaluation);
+    const parsedData = Array.isArray(evaluation.data) ? evaluation.data : [];
+    return res.json({
+      id: evaluation.id,
+      data: parsedData,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Error al obtener evaluación admin:", error);
     res.status(500).json({ message: "Error al obtener evaluación" });
   }
 };

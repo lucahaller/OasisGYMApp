@@ -17,65 +17,73 @@ import {
   getSelfEvaluatedStatus,
 } from "../controllers/routinesController";
 import { upload } from "../middleware/uploadMiddleware";
+
 const router = express.Router();
 
+// ==========================
+// 📦 ADMIN - CRUD BASES
+// ==========================
 router.post(
   "/",
   authenticateToken,
   authorizeRole("ADMIN"),
   asyncHandler(createRoutineBase)
 );
+
 router.post(
   "/assign",
   authenticateToken,
   authorizeRole("ADMIN"),
   asyncHandler(assignRoutineToUser)
 );
+
 router.get(
   "/",
   authenticateToken,
   authorizeRole("ADMIN"),
   asyncHandler(getAllRoutineBases)
 );
-router.get(
-  "/user/:userId",
-  authenticateToken,
-  authorizeRole("ADMIN"),
-  asyncHandler(getUserRoutine)
-);
 
+// ==========================
+// 📄 EXCEL FILE HANDLING
+// ==========================
 router.post(
   "/upload-excel",
   authenticateToken,
-  authorizeRole("ADMIN"), // o CLIENTE si es carga personalizada
+  authorizeRole("ADMIN"),
   upload.single("file"),
   asyncHandler(readRoutineExcel)
 );
-router.get(
-  "/user/:userId/exercises",
-  authenticateToken,
-  authorizeRole("ADMIN", "USER"),
-  asyncHandler(getUserRoutineExercises)
-);
 
+// ==========================
+// ✅ EVALUACIONES
+// ==========================
+
+// Evaluación por parte del ADMIN o USER (usa el Excel y genera archivo final)
 router.post(
   "/user/:userId/evaluate",
   authenticateToken,
-  authorizeRole("ADMIN"),
+  authorizeRole("ADMIN", "USER"),
   asyncHandler(evaluateUserRoutine)
 );
+
+// Autoevaluación (self)
+router.post(
+  "/user/:userId/evaluate/self",
+  authenticateToken,
+  authorizeRole("USER"),
+  asyncHandler(selfEvaluateRoutine)
+);
+
+// ==========================
+// 📥 DESCARGAS Y STATUS
+// ==========================
 
 router.get(
   "/user/:userId/evaluated-download",
   authenticateToken,
   authorizeRole("USER", "ADMIN"),
   asyncHandler(getEvaluatedRoutineFile)
-);
-router.get(
-  "/user/:userId/status",
-  authenticateToken,
-  authorizeRole("ADMIN"),
-  asyncHandler(getUserRoutineStatus)
 );
 
 router.get(
@@ -85,16 +93,38 @@ router.get(
   asyncHandler(getLastEvaluatedRoutines)
 );
 
-router.post(
-  "/user/:userId/evaluate/self",
+router.get(
+  "/user/:userId/status",
   authenticateToken,
-  authorizeRole("USER"),
-  asyncHandler(selfEvaluateRoutine)
+  authorizeRole("ADMIN"),
+  asyncHandler(getUserRoutineStatus)
 );
+
 router.get(
   "/user/:userId/selfevaluated",
   authenticateToken,
   authorizeRole("USER"),
   asyncHandler(getSelfEvaluatedStatus)
 );
+
+// ==========================
+// 🏋️‍♂️ USUARIO
+// ==========================
+
+// Ejercicios de la rutina (sección principal de evaluación)
+router.get(
+  "/user/:userId/exercises",
+  authenticateToken,
+  authorizeRole("ADMIN", "USER"),
+  asyncHandler(getUserRoutineExercises)
+);
+
+// Información general de la rutina asignada
+router.get(
+  "/user/:userId",
+  authenticateToken,
+  authorizeRole("ADMIN"),
+  asyncHandler(getUserRoutine)
+);
+
 export default router;

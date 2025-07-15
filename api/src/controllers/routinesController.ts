@@ -220,10 +220,7 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "No tiene rutina" });
 
     const fileUrl = assignment.customFile || assignment.routine!.fileUrl;
-    const filePath = path.resolve(
-      process.cwd(),
-      fileUrl.replace(/^\/public\//, "public/")
-    );
+    const filePath = path.resolve(process.cwd(), "uploads/routines", fileUrl);
     if (!fs.existsSync(filePath))
       return res.status(404).json({ message: "Archivo no encontrado" });
 
