@@ -15,6 +15,7 @@ import {
   getLastEvaluatedRoutines,
   selfEvaluateRoutine,
   getSelfEvaluatedStatus,
+  uploadRoutineExcel,
 } from "../controllers/routinesController";
 import { upload } from "../middleware/uploadMiddleware";
 
@@ -48,11 +49,11 @@ router.get(
 // 📄 EXCEL FILE HANDLING
 // ==========================
 router.post(
-  "/upload-excel",
+  "/uploadexcel",
   authenticateToken,
   authorizeRole("ADMIN"),
   upload.single("file"),
-  asyncHandler(readRoutineExcel)
+  asyncHandler(uploadRoutineExcel)
 );
 
 // ==========================

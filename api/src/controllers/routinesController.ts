@@ -106,29 +106,40 @@ export const getUserRoutine = async (
   }
 };
 
-export const readRoutineExcel = async (req: Request, res: Response) => {
+export const uploadRoutineExcel = async (req: Request, res: Response) => {
   try {
-    const filePath = req.file.path;
+    const file = req.file;
+    if (!file)
+      return res.status(400).json({ message: "No se subió ningún archivo" });
 
-    const workbook = xlsx.readFile(filePath);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const jsonData = xlsx.utils.sheet_to_json(sheet, { defval: "" });
+    const filename = `${Date.now()}-${file.originalname}`;
+    const finalPath = path.resolve("public/routines", filename);
+    fs.renameSync(file.path, finalPath);
 
-    // Filtramos posibles columnas útiles
-    const ejercicios = jsonData
-      .map((row) => ({
-        ejercicio: row.Ejercicio || row.EJERCICIO || row.Nombre || "",
-        series: row.Series || row.SERIES || "",
-        reps: row.Repeticiones || row.REPS || row.Repet || "",
-      }))
-      .filter((ej) => ej.ejercicio); // solo si tiene nombre de ejercicio
+    let routine = null;
 
-    res.json({ ejercicios });
+    if (req.body.saveToDB === "true") {
+      routine = await prisma.routine.create({
+        data: {
+          name: file.originalname.replace(".xlsx", ""),
+          type: "personalizada",
+          days: 3, // Podés dejarlo fijo o dejar que lo mande el admin si querés
+          fileUrl: `/public/routines/${filename}`,
+        },
+      });
+    }
+
+    res.json({
+      message: "Archivo subido correctamente",
+      routine, // null si no se guardó en DB
+      fileUrl: `/public/routines/${filename}`,
+    });
   } catch (error) {
-    console.error("Error al leer el Excel:", error);
-    res.status(500).json({ message: "Error al leer la planilla" });
+    console.error("❌ Error al subir rutina:", error);
+    res.status(500).json({ message: "Error al subir la rutina" });
   }
 };
+
 export const getUserRoutineExercises = async (req: Request, res: Response) => {
   const { userId } = req.params;
 
