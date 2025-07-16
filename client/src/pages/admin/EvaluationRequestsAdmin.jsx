@@ -18,17 +18,17 @@ export default function EvaluationRequestsAdmin({ goBack }) {
             },
           }
         );
-        setRequests(res.data);
-        setLoading(false);
+        setRequests(res.data.filter((req) => req.status === "pendiente"));
       } catch (err) {
         console.error("Error al cargar solicitudes", err);
+      } finally {
         setLoading(false);
       }
     };
 
     fetchRequests();
   }, []);
-  console.log(requests);
+
   const handleApprove = async (id) => {
     const token = localStorage.getItem("token");
     try {
@@ -49,47 +49,95 @@ export default function EvaluationRequestsAdmin({ goBack }) {
     }
   };
 
-  if (loading) return <p className="text-sm">Cargando solicitudes...</p>;
+  if (loading)
+    return (
+      <p className="text-sm text-gray-600 dark:text-gray-300">
+        Cargando solicitudes...
+      </p>
+    );
 
   return (
-    <div>
-      <div className="flex justify-between mb-6">
-        <h2 className="text-xl font-semibold">Solicitudes de Evaluación</h2>
+    <div className="p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+          Solicitudes de Evaluación
+        </h2>
         <button
           onClick={goBack}
-          className="bg-gray-400 text-white px-4 py-2 rounded"
+          className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-3 py-1 rounded border border-transparent hover:border-gray-400 transition"
+          aria-label="Volver"
+          type="button"
         >
-          Volver
+          ← Volver
         </button>
       </div>
 
-      {message && <p className="text-green-600 mb-4">{message}</p>}
+      {message && (
+        <p className="mb-4 text-center text-green-600 dark:text-green-400 font-medium">
+          {message}
+        </p>
+      )}
 
-      <table className="min-w-full bg-white rounded-xl shadow">
-        <thead>
-          <tr className="bg-blue-400 text-white text-left text-sm uppercase font-semibold">
-            <th className="py-3 px-4">Usuario</th>
-            <th className="py-3 px-4">Estado</th>
-            <th className="py-3 px-4">Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          {requests.map((req) => (
-            <tr key={req.id} className="border-b hover:bg-gray-100">
-              <td className="py-3 px-4">{req.user?.name || "Sin nombre"}</td>
-              <td className="py-3 px-4">{req.status}</td>
-              <td className="py-3 px-4">
-                <button
-                  onClick={() => handleApprove(req.id)}
-                  className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700"
-                >
-                  Aprobar
-                </button>
-              </td>
+      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-blue-600 dark:bg-blue-700">
+            <tr>
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider"
+              >
+                Usuario
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider"
+              >
+                Estado
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider"
+              >
+                Acción
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+            {requests.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={3}
+                  className="px-6 py-4 whitespace-nowrap text-center text-gray-500 dark:text-gray-400"
+                >
+                  No hay solicitudes pendientes.
+                </td>
+              </tr>
+            ) : (
+              requests.map((req) => (
+                <tr
+                  key={req.id}
+                  className="hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-100">
+                    {req.user?.name || "Sin nombre"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300 capitalize">
+                    {req.status}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => handleApprove(req.id)}
+                      className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition"
+                    >
+                      Aprobar
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

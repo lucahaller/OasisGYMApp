@@ -1,4 +1,3 @@
-// src/pages/admin/UserDetailPage.jsx
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -29,19 +28,28 @@ export default function UserDetailPage() {
 
   if (error) {
     return (
-      <div className="p-6 text-red-600">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-6">
         <button
           onClick={() => navigate("/dashboard")}
-          className="text-blue-600 underline"
+          className="text-lime-600 hover:underline text-base font-medium"
         >
           ← Volver al dashboard
         </button>
-        <p className="mt-4">{error}</p>
+        <p className="mt-4 text-red-500">{error}</p>
       </div>
     );
   }
 
-  if (!user) return <div className="p-6">Cargando usuario...</div>;
+  if (!user)
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-6">
+        Cargando usuario...
+      </div>
+    );
 
-  return <UserDashboard data={user} goBack={() => navigate("/dashboard")} />;
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+      <UserDashboard data={user} goBack={() => navigate("/dashboard")} />
+    </div>
+  );
 }

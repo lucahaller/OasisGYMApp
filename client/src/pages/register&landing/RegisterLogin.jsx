@@ -45,77 +45,140 @@ export default function RegisterLogin({ onSubmit }) {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gray-100">
-      <div className="max-w-md w-full bg-white shadow-lg p-6 rounded-lg">
-        <h2 className="text-2xl font-bold mb-4 text-center">
-          {isLogin ? "Iniciar Sesión" : "Registro"}
-        </h2>
+    <div>
+      <h2 className="text-3xl font-bold mb-6 text-center text-gray-900 dark:text-gray-100">
+        {isLogin ? "Iniciar Sesión" : "Registro"}
+      </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Nombre
-              </label>
-              <input
-                type="text"
-                name="name"
-                required
-                onChange={handleChange}
-                className="mt-1 block w-full text-black px-4 py-2 border rounded-md"
-              />
-            </div>
-          )}
-
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {!isLogin && (
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
+            <label
+              htmlFor="name"
+              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            >
+              Nombre
             </label>
             <input
-              type="email"
-              name="email"
+              id="name"
+              name="name"
+              type="text"
               required
               onChange={handleChange}
-              className="mt-1 block w-full text-black px-4 py-2 border rounded-md"
+              value={formData.name}
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
+                         focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
+                         dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white
+                         dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              placeholder="Tu nombre"
             />
           </div>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              name="password"
-              required
-              onChange={handleChange}
-              className="mt-1 block w-full text-black px-4 py-2 border rounded-md"
-            />
-          </div>
-
-          {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Confirmar Contraseña
-              </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                required
-                onChange={handleChange}
-                className="mt-1 block w-full text-black px-4 py-2 border rounded-md"
-              />
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md"
+        <div>
+          <label
+            htmlFor="email"
+            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
           >
-            {isLogin ? "Iniciar sesión" : "Registrarse"}
-          </button>
-        </form>
-      </div>
+            Correo Electrónico
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <svg
+                className="w-5 h-5 text-gray-500 dark:text-gray-400"
+                fill="currentColor"
+                viewBox="0 0 20 16"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path d="m10.036 8.278 9.258-7.79A1.979 1.979 0 0 0 18 0H2A1.987 1.987 0 0 0 .641.541l9.395 7.737Z" />
+                <path d="M11.241 9.817c-.36.275-.801.425-1.255.427-.428 0-.845-.138-1.187-.395L0 2.6V14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2.5l-8.759 7.317Z" />
+              </svg>
+            </div>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              onChange={handleChange}
+              value={formData.email}
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
+                         focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5
+                         dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white
+                         dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              placeholder="correo@ejemplo.com"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="password"
+            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+          >
+            Contraseña
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            onChange={handleChange}
+            value={formData.password}
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
+                       focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
+                       dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white
+                       dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            placeholder="Contraseña"
+          />
+        </div>
+
+        {!isLogin && (
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            >
+              Confirmar Contraseña
+            </label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              required
+              onChange={handleChange}
+              value={formData.confirmPassword}
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
+                         focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
+                         dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white
+                         dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              placeholder="Confirmar contraseña"
+            />
+          </div>
+        )}
+
+        <button
+          type="submit"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-semibold transition"
+        >
+          {isLogin ? "Iniciar sesión" : "Registrarse"}
+        </button>
+      </form>
+
+      <p className="mt-4 text-center text-sm text-gray-700 dark:text-gray-300">
+        {isLogin
+          ? "¿No tienes cuenta?"
+          : "Registrate con el asesoramiento de tu profresor"}{" "}
+        <button
+          onClick={toggleForm}
+          className="text-blue-600 hover:underline font-semibold"
+          type="button"
+        >
+          {isLogin
+            ? "Registrate con el asesoramiento de tu profresor"
+            : "Registrate con el asesoramiento de tu profresor"}
+        </button>
+      </p>
     </div>
   );
 }

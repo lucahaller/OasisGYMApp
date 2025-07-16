@@ -49,7 +49,7 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          responseType: "blob", // Importante para archivos
+          responseType: "blob",
         }
       );
 
@@ -62,12 +62,17 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
     }
   };
 
-  if (estado === "loading")
-    return <p className="text-sm">Cargando rutina...</p>;
+  if (estado === "loading") {
+    return (
+      <p className="text-sm text-gray-700 dark:text-gray-300">
+        Cargando rutina...
+      </p>
+    );
+  }
 
   return (
-    <div className="bg-white p-6 rounded shadow mt-6">
-      {/* Si no hay rutina asignada */}
+    <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 p-6 rounded-lg shadow mt-6 text-sm text-gray-800 dark:text-gray-200">
+      {/* No asignada */}
       {estado === "no-assigned" && (
         <>
           <p className="mb-3">El usuario no tiene una rutina asignada.</p>
@@ -75,7 +80,7 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
             !showAssign ? (
               <button
                 onClick={() => setShowAssign(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition"
               >
                 Asignar rutina
               </button>
@@ -90,7 +95,7 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
         </>
       )}
 
-      {/* Rutina asignada pero sin evaluar */}
+      {/* Asignada pero sin evaluar */}
       {estado === "assigned" && !showEvaluate && (
         <>
           <p className="mb-3">
@@ -98,7 +103,7 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
           </p>
           <button
             onClick={() => setShowEvaluate(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition"
           >
             Evaluar rutina
           </button>
@@ -109,7 +114,7 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
         <EvaluationForm userId={userId} name={name} age={age} />
       )}
 
-      {/* Rutina evaluada */}
+      {/* Evaluada */}
       {estado === "evaluated" && (
         <>
           <h3 className="text-lg font-semibold mb-4">
@@ -117,37 +122,40 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
           </h3>
 
           {evaluatedRoutines.length > 0 ? (
-            <table className="w-full text-sm text-left mb-4 border">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-2">Nombre</th>
-                  <th className="px-4 py-2">Fecha</th>
-                  <th className="px-4 py-2">Archivo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {evaluatedRoutines.map((rutina) => (
-                  <tr key={rutina.id} className="border-b">
-                    <td className="px-4 py-2">
-                      {rutina.routine?.name || "Rutina personalizada"}
-                    </td>
-                    <td className="px-4 py-2">
-                      {new Date(rutina.updatedAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-2">
-                      <button
-                        onClick={handleDownload}
-                        target="_blank"
-                        className="text-blue-600 underline"
-                        rel="noreferrer"
-                      >
-                        Descargar
-                      </button>
-                    </td>
+            <div className="overflow-x-auto rounded-md border dark:border-gray-600 mb-4">
+              <table className="w-full text-sm text-left border-collapse">
+                <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  <tr>
+                    <th className="px-4 py-2">Nombre</th>
+                    <th className="px-4 py-2">Fecha</th>
+                    <th className="px-4 py-2">Archivo</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {evaluatedRoutines.map((rutina) => (
+                    <tr
+                      key={rutina.id}
+                      className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <td className="px-4 py-2">
+                        {rutina.routine?.name || "Rutina personalizada"}
+                      </td>
+                      <td className="px-4 py-2">
+                        {new Date(rutina.updatedAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-2">
+                        <button
+                          onClick={handleDownload}
+                          className="text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                          Descargar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <p>No hay rutinas evaluadas disponibles.</p>
           )}
@@ -156,7 +164,7 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
             !showAssign ? (
               <button
                 onClick={() => setShowAssign(true)}
-                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-sm"
+                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition"
               >
                 Asignar nueva rutina
               </button>

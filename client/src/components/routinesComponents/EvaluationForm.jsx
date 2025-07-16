@@ -132,57 +132,75 @@ export default function EvaluationForm({ userId, name, age }) {
     }
   };
 
-  if (loading) return <p>Cargando evaluación...</p>;
+  if (loading)
+    return (
+      <p className="text-gray-700 dark:text-gray-300">Cargando evaluación...</p>
+    );
 
   return (
-    <div className="mt-10 p-6 bg-white border rounded-md shadow">
-      <h3 className="text-xl font-semibold mb-4">Evaluación del Usuario</h3>
+    <div className="mt-10 p-6 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow">
+      <h3 className="text-xl font-semibold mb-6 text-gray-900 dark:text-gray-100">
+        Evaluación del Usuario
+      </h3>
 
       {exercises.map((ex, index) => (
         <div
           key={index}
-          className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"
+          className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-6 items-end"
         >
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              {ex.name}
-            </label>
-          </div>
+          <label
+            htmlFor={`peso-${index}`}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {ex.name}
+          </label>
+
           <input
+            id={`peso-${index}`}
             type="number"
             placeholder="Peso usado (kg)"
-            className="border p-2 rounded-md w-full"
+            className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
+            dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500
+            transition duration-150"
             value={values[index]?.peso ?? ""}
             onChange={(e) => handleChange(index, "peso", e.target.value)}
           />
+
           <input
             type="number"
+            id={`reps-${index}`}
             placeholder="Reps logradas"
-            className="border p-2 rounded-md w-full"
+            className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
+            dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500
+            transition duration-150"
             value={values[index]?.reps ?? ""}
             onChange={(e) => handleChange(index, "reps", e.target.value)}
           />
         </div>
       ))}
 
-      <div className="flex gap-4 mt-4">
+      <div className="flex gap-4 mt-8">
         <button
           onClick={handleSave}
           disabled={saving}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition"
         >
           {saving ? "Guardando..." : "Guardar Progreso"}
         </button>
 
         <button
           onClick={handleSubmit}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition"
         >
           Enviar Evaluación
         </button>
       </div>
 
-      {message && <p className="mt-3 text-sm text-gray-700">{message}</p>}
+      {message && (
+        <p className="mt-4 text-sm text-gray-700 dark:text-gray-300">
+          {message}
+        </p>
+      )}
     </div>
   );
 }

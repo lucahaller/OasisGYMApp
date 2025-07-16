@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: "class",
   content: [
     "./src/**/*.{js,jsx,ts,tsx}", // Asegura que Tailwind escanee estos archivos
     "./public/index.html", // Opcional si usas clases en el HTML

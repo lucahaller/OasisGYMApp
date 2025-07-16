@@ -8,6 +8,7 @@ import { useDispatch } from "react-redux";
 import { register } from "../../actions/authActions";
 import NotificationBell from "../../components/NotificationBell";
 import EvaluationRequestsAdmin from "./EvaluationRequestsAdmin";
+import { BsMoonStarsFill, BsSunFill } from "react-icons/bs";
 
 export default function MainAdmin() {
   const [profile, setProfile] = useState(null);
@@ -22,7 +23,18 @@ export default function MainAdmin() {
   const [count, setCount] = useState(0);
   const [refreshNotifications, setRefreshNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
-
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("theme") === "dark";
+  });
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
   const handleRegister = async (formData) => {
     try {
       await dispatch(register(formData));
@@ -51,9 +63,7 @@ export default function MainAdmin() {
 
     axios
       .get("http://localhost:3000/users/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setUsers(res.data))
       .catch((err) => {
@@ -63,9 +73,7 @@ export default function MainAdmin() {
 
     axios
       .get("http://localhost:3000/users/notifications", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
         setNotifications(Array.isArray(res.data) ? res.data : []);
@@ -82,20 +90,24 @@ export default function MainAdmin() {
     return <div className="text-center mt-10">Cargando perfil...</div>;
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="sticky top-0 z-10 bg-white border-b px-6 py-4 flex items-center justify-between shadow-sm">
-        <h1 className="text-xl font-semibold text-gray-700">Dashboard Oasis</h1>
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b px-6 py-4 flex items-center justify-between shadow-sm">
+        <h1 className="text-xl font-semibold text-gray-800 dark:text-white">
+          Dashboard Oasis
+        </h1>
         <div className="flex items-center gap-4">
-          <input
-            type="text"
-            placeholder="Buscar..."
-            className="border rounded-lg px-3 py-1 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-          />
+          <button
+            onClick={() => setDarkMode((prev) => !prev)}
+            className="text-gray-600 dark:text-yellow-300 hover:scale-110 transition-transform"
+            title="Cambiar modo"
+          >
+            {darkMode ? <BsSunFill size={20} /> : <BsMoonStarsFill size={20} />}
+          </button>
           <NotificationBell count={count} refresh={refreshNotifications} />
         </div>
       </header>
 
-      <main className="flex-1 px-6 py-4">
+      <main className="flex-1 px-6 py-6">
         {showEvaluationRequests ? (
           <EvaluationRequestsAdmin
             goBack={() => setShowEvaluationRequests(false)}
@@ -103,18 +115,18 @@ export default function MainAdmin() {
         ) : !showUser ? (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <div className="flex gap-4">
+              <div className="flex gap-4 flex-wrap">
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="bg-green-600 text-white px-4 py-2 rounded"
+                  className="bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition duration-150"
                 >
-                  Registrar nuevo usuario
+                  + Registrar usuario
                 </button>
                 <button
                   onClick={() => setShowEvaluationRequests(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition duration-150"
                 >
-                  Ver peticiones de evaluación
+                  📋 Ver peticiones de evaluación
                 </button>
               </div>
             </div>
@@ -125,58 +137,66 @@ export default function MainAdmin() {
               onRegister={handleRegister}
             />
 
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white rounded-xl shadow">
-                <thead>
-                  <tr className="bg-green-400 text-white text-left text-sm uppercase font-semibold">
-                    <th className="py-3 px-4">Nombre</th>
-                    <th className="py-3 px-4">Email</th>
-                    <th className="py-3 px-4">Edad</th>
-                    <th className="py-3 px-4">Altura</th>
-                    <th className="py-3 px-4">Peso</th>
-                    <th className="py-3 px-4">Pago</th>
-                    <th className="py-3 px-4">Estado</th>
-                    <th className="py-3 px-4 text-center">Acciones</th>
+            <div className="relative overflow-x-auto shadow-md sm:rounded-lg bg-white dark:bg-gray-800">
+              <table className="w-full text-sm text-left text-gray-500 dark:text-gray-300">
+                <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-300">
+                  <tr>
+                    <th className="px-6 py-3">Nombre</th>
+                    <th className="px-6 py-3">Email</th>
+                    <th className="px-6 py-3">Edad</th>
+                    <th className="px-6 py-3">Altura</th>
+                    <th className="px-6 py-3">Peso</th>
+                    <th className="px-6 py-3">Último pago</th>
+                    <th className="px-6 py-3">Estado</th>
+                    <th className="px-6 py-3 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users?.map((user) => (
-                    <tr key={user.id} className="border-b hover:bg-gray-100">
-                      <td className="py-3 px-4">{user.name}</td>
-                      <td className="py-3 px-4">{user.email}</td>
-                      <td className="py-3 px-4">{user.age || "-"}</td>
-                      <td className="py-3 px-4">
+                    <tr
+                      key={user.id}
+                      className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                        {user.name}
+                      </td>
+                      <td className="px-6 py-4">{user.email}</td>
+                      <td className="px-6 py-4">{user.age || "-"}</td>
+                      <td className="px-6 py-4">
                         {user.height ? `${user.height} cm` : "-"}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="px-6 py-4">
                         {user.weight ? `${user.weight} kg` : "-"}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="px-6 py-4">
                         {user.last_payment
                           ? new Date(user.last_payment).toLocaleDateString(
                               "es-AR"
                             )
                           : "Sin pago"}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="px-6 py-4 flex flex-row gap-2 items-center">
                         <div
-                          className={`w-5 h-5 rounded-full border-2 ${
+                          className={`w-3 h-3 rounded-full inline-block ${
                             user.payment_status === "verde"
-                              ? "border-green-600 bg-green-300"
+                              ? "bg-green-400"
                               : user.payment_status === "amarillo"
-                              ? "border-yellow-700 bg-yellow-400"
-                              : "border-red-600 bg-red-400"
+                              ? "bg-yellow-400"
+                              : "bg-red-500"
                           }`}
                         ></div>
+                        <p className="inline-block">
+                          {user.payment_status === "verde" && "Activo"}
+                        </p>
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="px-6 py-4 text-center">
                         <button
                           onClick={() =>
                             navigate(`/dashboard/users/${user.id}`)
                           }
-                          className=" hover:bg-green-400 hover:border-green-500 hover:text-white text-green-700 border-2 border-gray-300 rounded-sm text-sm px-3 py-1 "
+                          className="text-cyan-600 hover:text-cyan-700 font-semibold text-sm"
                         >
-                          Ver datos
+                          Ver usuario
                         </button>
                       </td>
                     </tr>
@@ -194,7 +214,7 @@ export default function MainAdmin() {
         )}
       </main>
 
-      <footer className="px-6 py-4 border-t">
+      <footer className="px-6 py-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800">
         <LogOutButton />
       </footer>
     </div>

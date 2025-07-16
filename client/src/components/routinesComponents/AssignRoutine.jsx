@@ -34,18 +34,21 @@ export default function AssignRoutine({ userId, setShowAssign }) {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setMessage("Rutina asignada con éxito");
+      setMessage("✅ Rutina asignada con éxito");
+      setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
-      setMessage("Error al asignar rutina");
+      console.error(err);
+      setMessage("❌ Error al asignar rutina");
     }
   };
+
   const handleUpload = async () => {
     if (!file) return;
     const token = localStorage.getItem("token");
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("saveToDB", saveInDb); // puede ser true o false
+    formData.append("saveToDB", saveInDb);
 
     try {
       setUploading(true);
@@ -62,7 +65,6 @@ export default function AssignRoutine({ userId, setShowAssign }) {
       const { routine, fileUrl } = res.data;
 
       if (routine) {
-        // si lo guardó en la base, asignamos por ID
         await axios.post(
           "http://localhost:3000/routines/assign",
           {
@@ -74,12 +76,11 @@ export default function AssignRoutine({ userId, setShowAssign }) {
           }
         );
       } else {
-        // si no se guardó, lo asignamos como archivo personalizado
         await axios.post(
           "http://localhost:3000/routines/assign",
           {
             userId,
-            customFile: fileUrl.replace("/public/", ""), // para que quede en uploads/routines/ después
+            customFile: fileUrl.replace("/public/", ""),
           },
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -87,30 +88,30 @@ export default function AssignRoutine({ userId, setShowAssign }) {
         );
       }
 
-      setMessage("Rutina personalizada asignada con éxito ✅");
+      setMessage("✅ Rutina personalizada asignada con éxito");
+      setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
       console.error(err);
-      setMessage("Error al subir o asignar rutina ❌");
+      setMessage("❌ Error al subir o asignar rutina");
     } finally {
       setUploading(false);
     }
   };
+
   return (
-    <div className="mt-8 bg-white border rounded-md p-6 shadow-sm text-sm w-full relative">
+    <div className="mt-8 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-6 shadow-md text-sm w-full relative text-gray-800 dark:text-gray-200">
       <button
-        className="absolute top-2 right-2 text-lg font-bold text-gray-600 hover:text-red-600"
+        className="absolute top-2 right-2 text-xl font-bold text-gray-500 hover:text-red-600"
         onClick={() => setShowAssign(false)}
       >
         ×
       </button>
 
       <div className="flex flex-col">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          Asignar rutina
-        </h3>
+        <h3 className="text-lg font-semibold mb-4">Asignar rutina</h3>
 
         <select
-          className="w-full p-2 border rounded-sm mb-4"
+          className="w-full p-2 border rounded-md mb-4 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           onChange={(e) => setSelectedRoutine(e.target.value)}
           defaultValue=""
         >
@@ -126,14 +127,13 @@ export default function AssignRoutine({ userId, setShowAssign }) {
 
         <button
           onClick={handleAssign}
-          className="bg-lime-600 hover:bg-lime-700 text-white px-4 py-2 rounded-sm"
+          className="bg-lime-600 hover:bg-lime-700 text-white px-4 py-2 rounded-md mb-6"
         >
           Asignar rutina
         </button>
-        <div className="mt-6 border-t pt-4">
-          <h4 className="font-semibold mb-2 text-gray-700">
-            Subir rutina personalizada
-          </h4>
+
+        <div className="border-t pt-4">
+          <h4 className="font-semibold mb-2">Subir rutina personalizada</h4>
 
           <input
             type="file"
@@ -142,7 +142,7 @@ export default function AssignRoutine({ userId, setShowAssign }) {
             onChange={(e) => setFile(e.target.files[0])}
           />
 
-          <label className="text-sm text-gray-600 flex items-center gap-2 mb-3">
+          <label className="text-sm flex items-center gap-2 mb-3">
             <input
               type="checkbox"
               checked={saveInDb}
@@ -154,12 +154,13 @@ export default function AssignRoutine({ userId, setShowAssign }) {
           <button
             onClick={handleUpload}
             disabled={uploading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-sm"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md"
           >
             {uploading ? "Subiendo..." : "Subir y asignar"}
           </button>
         </div>
-        {message && <p className="mt-3 text-gray-700">{message}</p>}
+
+        {message && <p className="mt-3 font-medium">{message}</p>}
       </div>
     </div>
   );

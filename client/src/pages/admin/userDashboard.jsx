@@ -52,18 +52,18 @@ export default function UserDashboard({ data, goBack }) {
   const getStatusColor = (status) => {
     switch (status) {
       case "verde":
-        return "text-green-600";
+        return "text-green-500";
       case "amarillo":
         return "text-yellow-500";
       case "rojo":
-        return "text-red-600";
+        return "text-red-500";
       default:
         return "text-gray-500";
     }
   };
 
   return (
-    <div className="p-6 sm:p-10 max-w-6xl mx-auto">
+    <div className="p-6 sm:p-10 max-w-6xl mx-auto text-gray-800 dark:text-gray-200">
       {showModal && (
         <PaymentModal
           userId={data.id}
@@ -86,11 +86,13 @@ export default function UserDashboard({ data, goBack }) {
         ← Volver al listado
       </button>
 
-      <div className="mb-6 flex flex-row">
-        <div className="flex flex-col">
-          <h2 className="text-4xl font-bold text-gray-800">{data.name}</h2>
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div>
+          <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
+            {data.name}
+          </h2>
           <p
-            className={`text-base font-semibold mt-1 ${getStatusColor(
+            className={`text-base font-semibold mt-2 ${getStatusColor(
               data.payment_status
             )}`}
           >
@@ -101,38 +103,36 @@ export default function UserDashboard({ data, goBack }) {
           </p>
         </div>
 
-        <div className="flex flex-row ml-auto gap-10 py-3">
+        <div className="flex gap-4">
           <button
             onClick={() => setShowModal(true)}
-            className="bg-lime-500 hover:bg-lime-600 text-white px-4 py-3 rounded-sm transition"
+            className="bg-lime-500 hover:bg-lime-600 text-white px-4 py-2 rounded-lg transition text-sm font-medium"
           >
-            Acreditar nuevo pago
+            💰 Acreditar pago
           </button>
           <button
             onClick={() => setShowModalDelete(true)}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-sm transition"
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition text-sm font-medium"
           >
-            Eliminar usuario
+            🗑️ Eliminar usuario
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* DATOS PERSONALES */}
-        <div className="bg-white border rounded-md p-6 shadow-sm text-[15px]">
+        {/* Datos personales */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md">
           <div className="flex items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-700">
-              Datos personales
-            </h3>
+            <h3 className="text-lg font-semibold">📋 Datos personales</h3>
             <button
               onClick={() => setEditingPersonalData(!editingPersonalData)}
-              className="ml-auto text-gray-600 hover:text-lime-600 transition"
+              className="ml-auto text-gray-500 hover:text-lime-500 transition"
             >
               <FaEdit className="text-xl" />
             </button>
           </div>
 
-          <ul className="space-y-2 text-gray-800">
+          <ul className="space-y-2">
             <li>
               <strong>Email:</strong> {data.email}
             </li>
@@ -143,7 +143,7 @@ export default function UserDashboard({ data, goBack }) {
                   name="age"
                   value={formData.age}
                   onChange={handleInputChange}
-                  className="w-full px-2 py-1 border rounded-sm"
+                  className="w-full px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border"
                 />
               ) : (
                 data.age || "No especificada"
@@ -156,7 +156,7 @@ export default function UserDashboard({ data, goBack }) {
                   name="height"
                   value={formData.height}
                   onChange={handleInputChange}
-                  className="w-full px-2 py-1 border rounded-sm"
+                  className="w-full px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border"
                 />
               ) : data.height ? (
                 `${data.height} cm`
@@ -171,7 +171,7 @@ export default function UserDashboard({ data, goBack }) {
                   name="weight"
                   value={formData.weight}
                   onChange={handleInputChange}
-                  className="w-full px-2 py-1 border rounded-sm"
+                  className="w-full px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border"
                 />
               ) : data.weight ? (
                 `${data.weight} kg`
@@ -186,7 +186,7 @@ export default function UserDashboard({ data, goBack }) {
                   name="injury"
                   value={formData.injury}
                   onChange={handleInputChange}
-                  className="w-full px-2 py-1 border rounded-sm"
+                  className="w-full px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border"
                 />
               ) : (
                 data.injury || "Sin lesiones"
@@ -197,16 +197,16 @@ export default function UserDashboard({ data, goBack }) {
           {editingPersonalData && (
             <button
               onClick={handleUserUpdate}
-              className="mt-4 bg-lime-500 hover:bg-lime-600 text-white px-4 py-2 rounded-sm"
+              className="mt-4 bg-lime-500 hover:bg-lime-600 text-white px-4 py-2 rounded-lg"
             >
               Guardar cambios
             </button>
           )}
         </div>
 
-        {/* PAGOS */}
-        <div className="bg-white border rounded-md p-6 shadow-sm text-[15px]">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Pagos</h3>
+        {/* Pagos */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md">
+          <h3 className="text-lg font-semibold mb-4">💳 Pagos</h3>
           <p>
             <strong>Ingreso:</strong>{" "}
             {format(new Date(data.created_at), "dd/MM/yyyy")}
@@ -222,22 +222,20 @@ export default function UserDashboard({ data, goBack }) {
             {data.payment_amount ? `$${data.payment_amount}` : "-"}
           </p>
           {data.payment_expiration && (
-            <p className="text-lime-600 mt-2">
+            <p className="text-lime-500 mt-2">
               <strong>Válido hasta:</strong>{" "}
               {format(new Date(data.payment_expiration), "dd/MM/yyyy")}
             </p>
           )}
         </div>
 
-        {/* NOTAS */}
-        <div className="bg-white border rounded-md p-6 shadow-sm text-[15px]">
+        {/* Notas */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md">
           <div className="flex items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-700">
-              Notas del usuario
-            </h3>
+            <h3 className="text-lg font-semibold">📝 Notas del usuario</h3>
             <button
               onClick={() => setEditingNotes(!editingNotes)}
-              className="ml-auto text-gray-600 hover:text-lime-600 transition"
+              className="ml-auto text-gray-500 hover:text-lime-500 transition"
             >
               <FaEdit className="text-xl" />
             </button>
@@ -250,11 +248,11 @@ export default function UserDashboard({ data, goBack }) {
                 value={formData.notes}
                 onChange={handleInputChange}
                 rows={4}
-                className="w-full p-3 border rounded-sm text-gray-700 focus:ring-2 focus:ring-lime-400"
+                className="w-full p-3 bg-gray-100 dark:bg-gray-700 border rounded-lg text-sm"
               />
               <button
                 onClick={handleUserUpdate}
-                className="mt-4 bg-lime-500 hover:bg-lime-600 text-white px-4 py-2 rounded-sm"
+                className="mt-4 bg-lime-500 hover:bg-lime-600 text-white px-4 py-2 rounded-lg"
               >
                 Guardar cambios
               </button>
@@ -264,7 +262,8 @@ export default function UserDashboard({ data, goBack }) {
           )}
         </div>
       </div>
-      <div>
+
+      <div className="mt-8">
         <UserRoutineFlow
           userId={data.id}
           paymentStatus={data.payment_status}
@@ -272,8 +271,9 @@ export default function UserDashboard({ data, goBack }) {
           age={data.age}
         />
       </div>
-      {message && <p className="text-green-600 mt-4">{message}</p>}
-      {error && <p className="text-red-600 mt-4">{error}</p>}
+
+      {message && <p className="text-green-500 mt-4">{message}</p>}
+      {error && <p className="text-red-500 mt-4">{error}</p>}
     </div>
   );
 }

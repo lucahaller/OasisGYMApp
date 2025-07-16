@@ -36,8 +36,16 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-full min-w-full">
-      <RegisterLogin onSubmit={handleRegister} />
+    <div
+      className="min-h-screen bg-cover bg-center flex items-center justify-center"
+      style={{
+        backgroundImage:
+          "url('https://img.freepik.com/foto-gratis/vista-angulo-hombre-musculoso-irreconocible-preparandose-levantar-barra-club-salud_637285-2497.jpg?semt=ais_hybrid&w=740')",
+      }}
+    >
+      <div className="bg-white/30 dark:bg-gray-900/50 backdrop-blur-md p-8 rounded-xl shadow-md max-w-md w-full">
+        <RegisterLogin onSubmit={handleRegister} />
+      </div>
     </div>
   );
 }
