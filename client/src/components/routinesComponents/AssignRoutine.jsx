@@ -55,7 +55,6 @@ export default function AssignRoutine({ userId, setShowAssign }) {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -138,7 +137,7 @@ export default function AssignRoutine({ userId, setShowAssign }) {
 
           <input
             type="file"
-            accept=".xlsx"
+            accept=".xlsx,.xls"
             className="mb-2"
             onChange={(e) => setFile(e.target.files[0])}
           />

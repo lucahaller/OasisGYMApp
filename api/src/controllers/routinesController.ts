@@ -119,12 +119,13 @@ export const uploadRoutineExcel = async (req: Request, res: Response) => {
     let routine = null;
 
     if (req.body.saveToDB === "true") {
-      routine = await prisma.routine.create({
+      routine = await prisma.routineBase.create({
         data: {
           name: file.originalname.replace(".xlsx", ""),
           type: "personalizada",
-          days: 3, // Podés dejarlo fijo o dejar que lo mande el admin si querés
+          days: 3,
           fileUrl: `/public/routines/${filename}`,
+          reusable: true,
         },
       });
     }
