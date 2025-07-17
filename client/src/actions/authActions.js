@@ -48,8 +48,10 @@ export const register = (formData) => async (dispatch) => {
 
     localStorage.setItem("user", JSON.stringify(user));
     dispatch(authSuccess(token, user));
+    return { token, user }; // <- retornamos por claridad
   } catch (error) {
     dispatch(authFail(error.response?.data?.message || "Error al registrarse"));
+    // Lanzamos el error completo para que el modal lo pueda manejar
     throw error;
   }
 };

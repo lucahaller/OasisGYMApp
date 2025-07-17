@@ -24,15 +24,28 @@ export const register = async (
       req.body;
 
     if (!name || !email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Nombre, email y contraseña son obligatorios." });
+      return res.status(400).json({
+        field: "general",
+        message: "Nombre, email y contraseña son obligatorios.",
+      });
     }
 
-    const existingUser = await prisma.users.findUnique({ where: { email } });
+    // Verificar email existente
+    const existingEmail = await prisma.users.findUnique({ where: { email } });
+    if (existingEmail) {
+      return res.status(400).json({
+        field: "email",
+        message: "El correo ya está registrado.",
+      });
+    }
 
-    if (existingUser) {
-      return res.status(400).json({ message: "El correo ya está registrado." });
+    // Verificar nombre existente
+    const existingName = await prisma.users.findFirst({ where: { name } });
+    if (existingName) {
+      return res.status(400).json({
+        field: "name",
+        message: "El nombre de usuario ya existe.",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -53,7 +66,8 @@ export const register = async (
         notes: normalize(notes),
       },
     });
-    res.status(201).json({
+
+    return res.status(201).json({
       message: "Usuario registrado correctamente.",
       user: {
         id: newUser.id,
@@ -65,7 +79,10 @@ export const register = async (
     });
   } catch (error) {
     console.error("Error en el registro:", error);
-    res.status(500).json({ message: "Error interno del servidor." });
+    return res.status(500).json({
+      field: "general",
+      message: "Error interno del servidor.",
+    });
   }
 };
 

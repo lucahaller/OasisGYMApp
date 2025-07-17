@@ -37,9 +37,12 @@ export default function MainAdmin() {
   }, [darkMode]);
   const handleRegister = async (formData) => {
     try {
+      console.log("Datos enviados para registrar:", formData);
       await dispatch(register(formData));
+      console.log("Registro exitoso");
     } catch (err) {
       console.error("Error al registrar usuario", err);
+      throw err; // Importante: re-lanzar error para que el modal lo capture
     }
   };
 
