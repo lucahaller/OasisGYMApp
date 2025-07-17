@@ -79,17 +79,48 @@ export const login = async (req: Request, res: Response) => {
   }
 
   const user = await prisma.users.findUnique({ where: { email } });
-  if (user?.payment_expiration && new Date() > user.payment_expiration) {
+
+  if (!user) return res.status(401).json({ message: "Credenciales inválidas" });
+
+  // Comparar contraseña primero para evitar fugas de info
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) {
+    return res.status(401).json({ message: "Credenciales inválidas" });
+  }
+
+  // Si es admin, lo dejamos pasar sin validar pagos
+  if (user.role === "ADMIN") {
+    const token = jwt.sign({ id: user.id, role: user.role }, secret as Secret, {
+      expiresIn: expiresIn as jwt.SignOptions["expiresIn"],
+    });
+
+    return res.json({
+      token,
+      user: { id: user.id, name: user.name, role: user.role },
+    });
+  }
+
+  // Validaciones de pago SOLO para usuarios normales
+  if (user.payment_status === "rojo") {
+    return res
+      .status(403)
+      .json({ message: "Tu cuenta tiene el pago vencido." });
+  }
+
+  if (!user.last_payment) {
+    return res.status(403).json({
+      message:
+        "Aún no has realizado un pago. Contactá al gimnasio para habilitar tu cuenta.",
+    });
+  }
+
+  if (user.payment_expiration && new Date() > user.payment_expiration) {
     return res
       .status(403)
       .json({ message: "Cuenta inactiva por falta de pago" });
   }
-  if (!user) return res.status(401).json({ message: "Credenciales inválidas" });
 
-  const match = await bcrypt.compare(password, user.password);
-  if (!match)
-    return res.status(401).json({ message: "Credenciales inválidas" });
-
+  // Si pasa todas las validaciones, generar token
   const token = jwt.sign({ id: user.id, role: user.role }, secret as Secret, {
     expiresIn: expiresIn as jwt.SignOptions["expiresIn"],
   });
