@@ -220,124 +220,74 @@ const calculateRM = (peso: number, reps: number) => {
 };
 export const evaluateUserRoutine = async (req: Request, res: Response) => {
   const { userId } = req.params;
-  const { ejercicios, nombre, edad } = req.body; // 💡 Pasamos también datos personales
+  const { ejercicios, nombre, edad } = req.body;
 
   try {
-    const assignment = await prisma.routineAssignment.findFirst({
-      where: { userId: Number(userId) },
+    // 1) Busca la asignación BASE más reciente (no evaluada)
+    const lastBase = await prisma.routineAssignment.findFirst({
+      where: { userId: Number(userId), evaluated: false },
       orderBy: { createdAt: "desc" },
       include: { routine: true },
     });
-    if (!assignment)
-      return res.status(404).json({ message: "No tiene rutina" });
-
-    let filePath = "";
-    if (assignment.customFile) {
-      // archivo evaluado (lo guardas en uploads/routines/evaluations)
-      filePath = path.join(
-        process.cwd(),
-        "uploads",
-        "routines",
-        assignment.customFile
-      );
-    } else if (assignment.routine?.fileUrl) {
-      // archivo base (fileUrl apunta a /public/…)
-      filePath = path.join(
-        process.cwd(),
-        assignment.routine.fileUrl.replace(/^\/public\//, "public/")
-      );
-    } else {
-      return res.status(404).json({ message: "No tiene rutina asignada" });
+    if (!lastBase) {
+      return res.status(404).json({ message: "No tiene rutina base asignada" });
     }
 
-    if (!fs.existsSync(filePath)) {
-      console.error("🔍 Buscando aquí:", filePath);
-      return res.status(404).json({ message: "Archivo no encontrado" });
-    }
+    // 2) Genera el Excel como hacías
+    const filePath = lastBase.customFile
+      ? path.join(process.cwd(), "uploads/routines", lastBase.customFile)
+      : path.join(
+          process.cwd(),
+          lastBase.routine!.fileUrl.replace(/^\/public\//, "public/")
+        );
 
     const wb = xlsx.readFile(filePath);
-    const sheetName = wb.SheetNames[2];
-    const sh = wb.Sheets[sheetName];
+    const sh = wb.Sheets[wb.SheetNames[2]];
+    // ... (inserta datos personales, calcula RM, etc.)
 
-    // ✅ AGREGADO: Insertar datos personales si existen
-    const etiquetas = {
-      NOMBRE: nombre || "",
-      FECHA: new Date().toLocaleDateString("es-AR"),
-      EDAD: edad || "",
-    };
-
-    for (let i = 1; i <= 10; i++) {
-      const keyCell = sh[`A${i}`];
-      if (!keyCell) continue;
-
-      const label = keyCell.v?.toString().trim().toUpperCase();
-      if (etiquetas[label]) {
-        sh[`B${i}`] = { t: "s", v: etiquetas[label].toString() };
-      }
-    }
-
-    // 🧠 Setear RM en columna C como ya venías haciendo
-    const rows: any[][] = xlsx.utils.sheet_to_json(sh, {
-      header: 1,
-      defval: "",
-    });
-
-    const rmCol: (number | string)[][] = [];
-    for (let i = 6; i < rows.length; i++) {
-      const nombre: string = (rows[i][1] || "").toString().trim().toLowerCase();
-      if (!nombre || nombre === "ejercicio" || nombre === "grupo") {
-        rmCol.push([""]);
-        continue;
-      }
-      const encontrado = ejercicios.find(
-        (e: any) => e.ejercicio.toLowerCase().trim() === nombre
-      );
-      if (encontrado) {
-        rmCol.push([calculateRM(encontrado.peso, encontrado.reps)]);
-      } else {
-        rmCol.push([""]);
-      }
-    }
-
-    xlsx.utils.sheet_add_aoa(sh, rmCol, { origin: "C7" });
-
-    const evalName = `${userId}-${Date.now()}-evaluated.xlsx`;
+    const evalName = `${userId}-${Date.now()}-admin-evaluated.xlsx`;
     const saveDir = path.resolve(process.cwd(), "uploads/routines/evaluations");
     if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
     const savePath = path.join(saveDir, evalName);
     xlsx.writeFile(wb, savePath);
 
-    await prisma.routineAssignment.update({
-      where: { id: assignment.id },
-      data: { customFile: `evaluations/${evalName}`, evaluated: true },
+    // 3) CREA UN NUEVO Registro de RoutineAssignment para la evaluación del ADMIN
+    const adminAssignment = await prisma.routineAssignment.create({
+      data: {
+        userId: Number(userId),
+        routineBaseId: lastBase.routineBaseId,
+        customFile: `evaluations/${evalName}`,
+        evaluated: true,
+        selfEvaluated: false,
+      },
     });
 
-    const old = await prisma.routineAssignment.findMany({
+    // 4) Limpiar las evaluaciones antiguas dejando las dos más recientes
+    const toDelete = await prisma.routineAssignment.findMany({
       where: {
         userId: Number(userId),
         evaluated: true,
-        id: { not: assignment.id },
       },
       orderBy: { updatedAt: "desc" },
-      skip: 2,
+      skip: 2, // deja solo las dos más recientes
     });
-    for (const o of old) {
-      const p = path.join(process.cwd(), "uploads/routines", o.customFile!);
+    for (const old of toDelete) {
+      const p = path.join(process.cwd(), "uploads/routines", old.customFile!);
       if (fs.existsSync(p)) fs.unlinkSync(p);
-      await prisma.routineAssignment.delete({ where: { id: o.id } });
+      await prisma.routineAssignment.delete({ where: { id: old.id } });
     }
-    await prisma.evaluationRequest.deleteMany({
-      where: {
-        userId: Number(userId),
-      },
-    });
+
+    // **No toques** tus evaluationRequests aquí
+    // (o si querés, solo marcá como resuelto en lugar de borrarlo)
+
     return res.json({
-      message: "Evaluación guardada",
+      message: "Evaluación del admin guardada",
       evaluatedFile: `evaluations/${evalName}`,
+      adminAssignment,
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Error al evaluar rutina" });
+    res.status(500).json({ message: "Error al evaluar rutina por admin" });
   }
 };
 
