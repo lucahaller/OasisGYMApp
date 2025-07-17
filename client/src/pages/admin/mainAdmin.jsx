@@ -186,7 +186,11 @@ export default function MainAdmin() {
                           }`}
                         ></div>
                         <p className="inline-block">
-                          {user.payment_status === "verde" && "Activo"}
+                          {user.payment_status === "verde"
+                            ? "Activo"
+                            : user.payment_status === "Amarillo"
+                            ? "Activo (Pronto a vencer)"
+                            : "Inactivo"}
                         </p>
                       </td>
                       <td className="px-6 py-4 text-center">

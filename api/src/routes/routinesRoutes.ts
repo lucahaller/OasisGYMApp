@@ -90,7 +90,7 @@ router.get(
 router.get(
   "/user/:userId/evaluated/all",
   authenticateToken,
-  authorizeRole("ADMIN"),
+  authorizeRole("ADMIN", "USER"),
   asyncHandler(getLastEvaluatedRoutines)
 );
 

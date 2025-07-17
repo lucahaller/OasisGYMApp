@@ -8,10 +8,13 @@ import SelfEvaluationForm from "../../components/routinesComponents/SelfEvaluati
 import RequestEvaluation from "../../components/routinesComponents/RequestEvaluation";
 import { FaEdit } from "react-icons/fa";
 import { Switch } from "@headlessui/react";
+import LogOutButtonProfile from "../../components/LogOutButtonProfile";
+import useLastEvaluatedRoutines from "../../hooks/useLastEvaluatedRoutines";
 
 export default function MainProfile() {
   const [darkMode, setDarkMode] = useState(false);
   const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ age: "", height: "", weight: "" });
   const [editing, setEditing] = useState(false);
   const [tab, setTab] = useState("perfil");
@@ -31,7 +34,10 @@ export default function MainProfile() {
         });
       });
   }, []);
-
+  const { routines, loading: loadingRoutines } = useLastEvaluatedRoutines(
+    profile?.id
+  );
+  console.log(routines);
   const handleChange = (e) =>
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -72,6 +78,8 @@ export default function MainProfile() {
                 } inline-block h-4 w-4 transform rounded-full bg-white transition`}
               />
             </Switch>
+
+            <LogOutButtonProfile />
           </div>
         </div>
 
@@ -179,8 +187,60 @@ export default function MainProfile() {
         {/* Rutinas */}
         {tab === "rutinas" && (
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md mt-6">
-            <h3 className="text-lg font-semibold mb-2">Tus Rutinas</h3>
-            <DownloadEvaluatedRoutine userId={profile.id} />
+            <h3 className="text-lg font-semibold mb-4">
+              Tus Rutinas Evaluadas
+            </h3>
+
+            {loading ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Cargando rutinas...
+              </p>
+            ) : routines.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Aún no tenés rutinas evaluadas.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {routines.map((routine) => (
+                  <div
+                    key={routine.id}
+                    className="relative border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900 shadow-sm min-h-[220px] flex flex-col justify-between"
+                  >
+                    {/* Fecha arriba a la derecha */}
+                    <p className="absolute top-3 right-4 text-sm text-gray-500 dark:text-gray-400 font-semibold">
+                      {new Date(routine.createdAt).toLocaleDateString()}
+                    </p>
+
+                    {/* Contenido principal */}
+                    <div className="pr-6 text-xl">
+                      <p className="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">
+                        📄 Rutina:{" "}
+                        <span className="font-semibold">
+                          {routine.routine?.name || "Sin nombre"}
+                        </span>
+                      </p>
+                      <p className="text-md text-gray-600 dark:text-gray-400 mb-1">
+                        Días: {routine.routine?.days || "-"} días
+                      </p>
+                      <p className="text-md text-gray-600 dark:text-gray-400 mb-1">
+                        Tipo: {routine.routine?.type || "-"}
+                      </p>
+                      <p className="text-md text-gray-600 dark:text-gray-400 ">
+                        Autoevaluada:{" "}
+                        <span className="font-semibold">
+                          {routine.selfEvaluated ? "Sí" : "No"}
+                        </span>
+                      </p>
+                    </div>
+
+                    {/* Botón de descarga abajo a la derecha */}
+                    <div className="absolute bottom-2 right-4">
+                      <DownloadEvaluatedRoutine userId={profile?.id} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -207,9 +267,6 @@ export default function MainProfile() {
         )}
 
         {/* Logout al fondo */}
-        <div className="mt-12 flex justify-center">
-          <LogOutButton />
-        </div>
       </div>
     </div>
   );

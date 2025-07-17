@@ -1,5 +1,6 @@
 import axios from "axios";
 import { saveAs } from "file-saver";
+import { FaDownload } from "react-icons/fa";
 
 export default function DownloadEvaluatedRoutine({ userId }) {
   const handleDownload = async () => {
@@ -27,9 +28,9 @@ export default function DownloadEvaluatedRoutine({ userId }) {
   return (
     <button
       onClick={handleDownload}
-      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mt-4"
+      className="bg-blue-600 flex flex-row items-center justify-center gap-2 hover:bg-blue-700 text-white px-4 py-2 rounded-md mt-4"
     >
-      Descargar rutina
+      <FaDownload className="text-sm" /> <p>Descargar rutina</p>
     </button>
   );
 }
