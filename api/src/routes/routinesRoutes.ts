@@ -16,6 +16,7 @@ import {
   selfEvaluateRoutine,
   getSelfEvaluatedStatus,
   uploadRoutineExcel,
+  downloadEvaluatedRoutineById,
 } from "../controllers/routinesController";
 import { upload } from "../middleware/uploadMiddleware";
 
@@ -85,6 +86,13 @@ router.get(
   authenticateToken,
   authorizeRole("USER", "ADMIN"),
   asyncHandler(getEvaluatedRoutineFile)
+);
+
+router.get(
+  "/user/:userId/evaluated-download/:assignmentId",
+  authenticateToken,
+  authorizeRole("USER", "ADMIN"),
+  asyncHandler(downloadEvaluatedRoutineById)
 );
 
 router.get(

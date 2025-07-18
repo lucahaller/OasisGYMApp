@@ -239,10 +239,15 @@ export default function MainProfile() {
                       </span>
                     </div>
 
-                    {/* Botón de descarga abajo a la derecha */}
-                    <div className="absolute bottom-2 right-4">
-                      <DownloadEvaluatedRoutine userId={profile?.id} />
-                    </div>
+                    <DownloadEvaluatedRoutine
+                      userId={profile.id}
+                      assignmentId={routine.id}
+                      fileName={`${
+                        routine.routine?.name || "rutina"
+                      }-${new Date(
+                        routine.updatedAt
+                      ).toLocaleDateString()}.xlsx`}
+                    />
                   </div>
                 ))}
               </div>

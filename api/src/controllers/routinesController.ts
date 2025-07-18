@@ -233,25 +233,70 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "No tiene rutina base asignada" });
     }
 
-    // 2) Genera el Excel como hacías
+    // 2) Carga el archivo de Excel
     const filePath = lastBase.customFile
       ? path.join(process.cwd(), "uploads/routines", lastBase.customFile)
       : path.join(
           process.cwd(),
           lastBase.routine!.fileUrl.replace(/^\/public\//, "public/")
         );
-
+    if (!fs.existsSync(filePath)) {
+      return res
+        .status(404)
+        .json({ message: "Archivo de rutina no encontrado" });
+    }
     const wb = xlsx.readFile(filePath);
-    const sh = wb.Sheets[wb.SheetNames[2]];
-    // ... (inserta datos personales, calcula RM, etc.)
+    const sh = wb.Sheets[wb.SheetNames[2]]; // Hoja 3
 
+    // 3) Calcula y vuelca los RM en columna C empezando en fila 7
+    const rows: any[][] = xlsx.utils.sheet_to_json(sh, {
+      header: 1,
+      defval: "",
+    });
+    const percentageTable: Record<number, number> = {
+      1: 100,
+      2: 95,
+      3: 90,
+      4: 85,
+      5: 80,
+      6: 78,
+      7: 77,
+      8: 75,
+      9: 72,
+      10: 70,
+    };
+    const calculateRM = (peso: number, reps: number) => {
+      const pct = percentageTable[reps] || 69;
+      return Math.round((peso * 100) / pct);
+    };
+
+    const rmCol: (number | string)[][] = [];
+    for (let i = 6; i < rows.length; i++) {
+      const nombreEj = (rows[i][1] || "").toString().trim().toLowerCase();
+      if (!nombreEj || ["ejercicio", "grupo"].includes(nombreEj)) {
+        rmCol.push([""]);
+        continue;
+      }
+      const match = ejercicios.find(
+        (e: any) => e.ejercicio.toLowerCase().trim() === nombreEj
+      );
+      rmCol.push(match ? [calculateRM(match.peso, match.reps)] : [""]);
+    }
+    xlsx.utils.sheet_add_aoa(sh, rmCol, { origin: "C7" });
+
+    // 4) Inserta nombre, fecha y edad en celdas B2, B3, B4
+    if (nombre) sh["B2"] = { t: "s", v: nombre };
+    sh["B3"] = { t: "s", v: new Date().toLocaleDateString("es-AR") };
+    if (edad) sh["B4"] = { t: "s", v: `${edad}` };
+
+    // 5) Guarda el nuevo archivo evaluado
     const evalName = `${userId}-${Date.now()}-admin-evaluated.xlsx`;
     const saveDir = path.resolve(process.cwd(), "uploads/routines/evaluations");
     if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
     const savePath = path.join(saveDir, evalName);
     xlsx.writeFile(wb, savePath);
 
-    // 3) CREA UN NUEVO Registro de RoutineAssignment para la evaluación del ADMIN
+    // 6) Crea un nuevo registro de evaluation para el admin
     const adminAssignment = await prisma.routineAssignment.create({
       data: {
         userId: Number(userId),
@@ -262,23 +307,26 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
       },
     });
 
-    // 4) Limpiar las evaluaciones antiguas dejando las dos más recientes
+    // 7) Limpia evaluaciones antiguas dejando solo las 2 más recientes
     const toDelete = await prisma.routineAssignment.findMany({
       where: {
         userId: Number(userId),
         evaluated: true,
       },
       orderBy: { updatedAt: "desc" },
-      skip: 2, // deja solo las dos más recientes
+      skip: 2,
     });
     for (const old of toDelete) {
-      const p = path.join(process.cwd(), "uploads/routines", old.customFile!);
-      if (fs.existsSync(p)) fs.unlinkSync(p);
+      if (old.customFile) {
+        const oldPath = path.join(
+          process.cwd(),
+          "uploads/routines",
+          old.customFile
+        );
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
       await prisma.routineAssignment.delete({ where: { id: old.id } });
     }
-
-    // **No toques** tus evaluationRequests aquí
-    // (o si querés, solo marcá como resuelto en lugar de borrarlo)
 
     return res.json({
       message: "Evaluación del admin guardada",
@@ -286,7 +334,7 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
       adminAssignment,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Error al evaluar rutina por admin:", err);
     res.status(500).json({ message: "Error al evaluar rutina por admin" });
   }
 };
@@ -365,12 +413,13 @@ export const getLastEvaluatedRoutines = async (req: Request, res: Response) => {
   }
 };
 
+// Autoevaluación (self)
 export const selfEvaluateRoutine = async (req: Request, res: Response) => {
   const { userId } = req.params;
   const { ejercicios, nombre, edad } = req.body;
 
   try {
-    // 0) Buscar una solicitud aprobada pendiente de autoevaluación
+    // 0) Buscamos la solicitud aprobada pendiente de autoevaluación
     const approvedRequest = await prisma.evaluationRequest.findFirst({
       where: {
         userId: Number(userId),
@@ -386,7 +435,7 @@ export const selfEvaluateRoutine = async (req: Request, res: Response) => {
       });
     }
 
-    // 1) Obtener la última rutina evaluada por el admin
+    // 1) Recuperamos la última rutina evaluada por admin
     const lastAdminEval = await prisma.routineAssignment.findFirst({
       where: {
         userId: Number(userId),
@@ -402,77 +451,67 @@ export const selfEvaluateRoutine = async (req: Request, res: Response) => {
       });
     }
 
-    // 2) Resolver ruta al archivo
+    // 2) Determinamos la ruta al archivo Excel
     const fileUrl = lastAdminEval.customFile || lastAdminEval.routine!.fileUrl;
-    let filePath: string;
-    if (fileUrl.startsWith("evaluations/")) {
-      filePath = path.join(process.cwd(), "uploads", "routines", fileUrl);
-    } else {
-      filePath = path.join(
-        process.cwd(),
-        fileUrl.replace(/^\/public\//, "public/")
-      );
-    }
+    const filePath = fileUrl.startsWith("evaluations/")
+      ? path.join(process.cwd(), "uploads", "routines", fileUrl)
+      : path.join(process.cwd(), fileUrl.replace(/^\/public\//, "public/"));
     if (!fs.existsSync(filePath)) {
       return res
         .status(404)
         .json({ message: "Archivo de rutina no encontrado" });
     }
 
-    // 3) Leer y escribir Excel
+    // 3) Leemos el workbook y la hoja 3
     const wb = xlsx.readFile(filePath);
-    const sh = wb.Sheets[wb.SheetNames[2]];
-    const rows: any[][] = xlsx.utils.sheet_to_json(sh, {
+    const sheet = wb.Sheets[wb.SheetNames[2]];
+
+    // 4) Preparamos los datos de RM
+    const rows: any[][] = xlsx.utils.sheet_to_json(sheet, {
       header: 1,
       defval: "",
     });
-    const percentageTable: Record<number, number> = {
-      1: 100,
-      2: 95,
-      3: 90,
-      4: 85,
-      5: 80,
-      6: 78,
-      7: 77,
-      8: 75,
-      9: 72,
-      10: 70,
-    };
-    const calculateRM = (peso: number, reps: number) => {
-      const pct = percentageTable[reps] || 69;
-      return Math.round((peso * 100) / pct);
-    };
 
-    const rmCol: (number | string)[][] = [];
+    // 5) Generamos la columna de RM sin pisar filas como "LUNES"
+    const rmValues: (number | string)[][] = [];
     for (let i = 6; i < rows.length; i++) {
-      const nombreEj = (rows[i][1] || "").toString().trim().toLowerCase();
-      if (!nombreEj || ["ejercicio", "grupo"].includes(nombreEj)) {
-        rmCol.push([""]);
+      const label = (rows[i][1] || "").toString().trim().toLowerCase();
+      if (!label || label === "ejercicio" || label === "grupo") {
+        rmValues.push([""]);
         continue;
       }
       const match = ejercicios.find(
-        (e: any) => e.ejercicio.toLowerCase().trim() === nombreEj
+        (e: any) => e.ejercicio.toLowerCase().trim() === label
       );
-      rmCol.push(match ? [calculateRM(match.peso, match.reps)] : [""]);
+      rmValues.push(match ? [calculateRM(match.peso, match.reps)] : [""]);
     }
-    xlsx.utils.sheet_add_aoa(sh, rmCol, { origin: "C7" });
+    const numExercises = ejercicios.length;
+    const rmToWrite = rmValues.slice(0, numExercises);
+    xlsx.utils.sheet_add_aoa(sheet, rmValues, { origin: "C7" });
 
-    if (nombre) sh["B2"] = { t: "s", v: nombre };
-    sh["B3"] = { t: "s", v: new Date().toLocaleDateString("es-AR") };
-    if (edad) sh["B4"] = { t: "s", v: `${edad}` };
+    // 6) Escribimos nombre, fecha y edad en las celdas exactas
+    //    Ajusta "B2", "D2" y "B3" según tu plantilla real.
+    if (nombre) {
+      sheet["B1"] = { t: "s", v: nombre }; // Nombre
+    }
+    // Fecha de hoy
+    sheet["B2"] = { t: "s", v: new Date().toLocaleDateString("es-AR") };
+    if (edad) {
+      sheet["B3"] = { t: "n", v: Number(edad) }; // Edad
+    }
 
-    // 4) Guardar archivo
+    // 7) Guardar el nuevo archivo autoevaluado...
     const evalName = `${userId}-${Date.now()}-self-evaluated.xlsx`;
     const saveDir = path.resolve(process.cwd(), "uploads/routines/evaluations");
     if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
     const savePath = path.join(saveDir, evalName);
     xlsx.writeFile(wb, savePath);
 
-    // 5) Registrar autoevaluación *con* routineBaseId y borrar la solicitud
+    // 8) Registrar la autoevaluación y borrar la solicitud
     await prisma.routineAssignment.create({
       data: {
         userId: Number(userId),
-        routineBaseId: lastAdminEval.routineBaseId, // ← aquí
+        routineBaseId: lastAdminEval.routineBaseId,
         evaluated: true,
         selfEvaluated: true,
         customFile: `evaluations/${evalName}`,
@@ -512,5 +551,45 @@ export const getSelfEvaluatedStatus = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error al obtener estado de selfEvaluated:", error);
     return res.status(500).json({ message: "Error al consultar evaluación" });
+  }
+};
+
+// controllers/routinesController.ts
+export const downloadEvaluatedRoutineById = async (
+  req: Request<{ userId: string; assignmentId: string }>,
+  res: Response
+) => {
+  const { userId, assignmentId } = req.params;
+
+  try {
+    // 1) Asegurarnos que el assignment existe y pertenece al user
+    const assignment = await prisma.routineAssignment.findFirst({
+      where: {
+        id: Number(assignmentId),
+        userId: Number(userId),
+        evaluated: true,
+      },
+    });
+    if (!assignment || !assignment.customFile) {
+      return res.status(404).json({ message: "Rutina evaluada no encontrada" });
+    }
+
+    // 2) Leer y servir el archivo
+    const filePath = path.join(
+      process.cwd(),
+      "uploads/routines",
+      assignment.customFile
+    );
+    if (!fs.existsSync(filePath)) {
+      return res
+        .status(404)
+        .json({ message: "Archivo no encontrado en disco" });
+    }
+    return res.download(filePath);
+  } catch (error) {
+    console.error("Error al descargar rutina evaluada por ID:", error);
+    return res
+      .status(500)
+      .json({ message: "Error al descargar rutina evaluada" });
   }
 };

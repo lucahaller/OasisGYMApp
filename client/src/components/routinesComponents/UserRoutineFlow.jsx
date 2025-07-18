@@ -9,9 +9,9 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
   const [showAssign, setShowAssign] = useState(false);
   const [showEvaluate, setShowEvaluate] = useState(false);
   const [evaluatedRoutines, setEvaluatedRoutines] = useState([]);
-
   const token = localStorage.getItem("token");
 
+  // 1. Recuperar estado de rutina (no-assigned, assigned, evaluated)
   useEffect(() => {
     const fetchEstado = async () => {
       try {
@@ -24,43 +24,25 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
         setEstado("no-assigned");
       }
     };
-
     fetchEstado();
-  }, [userId, showAssign, showEvaluate]);
+  }, [userId, showAssign, showEvaluate, token]);
 
+  // 2. Si está evaluada, traer las dos últimas assignments
   useEffect(() => {
     if (estado === "evaluated") {
-      const fetchEvaluated = async () => {
-        const res = await axios.get(
-          `http://localhost:3000/routines/user/${userId}/evaluated/all`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setEvaluatedRoutines(res.data);
-      };
-      fetchEvaluated();
-    }
-  }, [estado]);
-
-  const handleDownload = async () => {
-    try {
-      const response = await axios.get(
-        `http://localhost:3000/routines/user/${userId}/evaluated-download`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          responseType: "blob",
+      (async () => {
+        try {
+          const res = await axios.get(
+            `http://localhost:3000/routines/user/${userId}/evaluated/all`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setEvaluatedRoutines(res.data);
+        } catch (err) {
+          console.error("Error al cargar evaluaciones:", err);
         }
-      );
-
-      const blob = new Blob([response.data], {
-        type: response.headers["content-type"],
-      });
-      saveAs(blob, "rutina-evaluada.xlsx");
-    } catch (err) {
-      console.error("Error al descargar rutina evaluada", err);
+      })();
     }
-  };
+  }, [estado, userId, token]);
 
   if (estado === "loading") {
     return (
@@ -109,7 +91,6 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
           </button>
         </>
       )}
-
       {estado === "assigned" && showEvaluate && (
         <EvaluationForm userId={userId} name={name} age={age} />
       )}
@@ -144,12 +125,19 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
                         {new Date(rutina.updatedAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-2">
-                        <button
-                          onClick={handleDownload}
-                          className="text-blue-600 hover:underline dark:text-blue-400"
-                        >
-                          Descargar
-                        </button>
+                        {/* Aquí le pasamos assignmentId para descargar esa rutina */}
+                        <DownloadEvaluatedRoutine
+                          userId={userId}
+                          assignmentId={rutina.id}
+                          fileName={`
+                            ${
+                              rutina.routine?.name
+                                ?.replace(/\s+/g, "-")
+                                .toLowerCase() || "rutina"
+                            }-${new Date(rutina.updatedAt)
+                            .toISOString()
+                            .slice(0, 10)}.xlsx`}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -160,6 +148,7 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
             <p>No hay rutinas evaluadas disponibles.</p>
           )}
 
+          {/* Botón Asignar nueva */}
           {paymentStatus === "verde" ? (
             !showAssign ? (
               <button
