@@ -4,34 +4,26 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // 1. Crear solicitud de evaluación
+// controllers/evaluationController.ts
+
 export const createEvaluationRequest = async (req: Request, res: Response) => {
-  const user = req.user;
-
-  if (!user) {
-    return res.status(401).json({ message: "No autenticado" });
-  }
-
+  const user = req.user!;
   try {
+    // Sólo miramos status, NO selfEvaluated ni fecha
     const existing = await prisma.evaluationRequest.findFirst({
       where: {
         userId: user.id,
         status: { in: ["pendiente", "aprobada"] },
       },
     });
-
     if (existing) {
       return res
         .status(400)
         .json({ message: "Ya tienes una solicitud activa." });
     }
-
     const request = await prisma.evaluationRequest.create({
-      data: {
-        userId: user.id,
-        status: "pendiente",
-      },
+      data: { userId: user.id, status: "pendiente" },
     });
-
     res.status(201).json(request);
   } catch (error) {
     console.error("Error al crear solicitud:", error);
@@ -86,7 +78,6 @@ export const saveEvaluationProgress = async (req: Request, res: Response) => {
 // 4. Aprobar solicitud de evaluación (ADMIN)
 export const approveEvaluationRequest = async (req: Request, res: Response) => {
   const { id } = req.params;
-
   try {
     const request = await prisma.evaluationRequest.update({
       where: { id: Number(id) },
@@ -95,7 +86,6 @@ export const approveEvaluationRequest = async (req: Request, res: Response) => {
         updatedAt: new Date(),
       },
     });
-
     res.json({ message: "Solicitud aprobada", request });
   } catch (error) {
     console.error("Error al aprobar solicitud:", error);

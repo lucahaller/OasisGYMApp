@@ -370,106 +370,119 @@ export const selfEvaluateRoutine = async (req: Request, res: Response) => {
   const { ejercicios, nombre, edad } = req.body;
 
   try {
-    const user = await prisma.users.findUnique({
-      where: { id: Number(userId) },
+    // 0) Buscar una solicitud aprobada pendiente de autoevaluación
+    const approvedRequest = await prisma.evaluationRequest.findFirst({
+      where: {
+        userId: Number(userId),
+        status: "aprobada",
+        evaluatedByAdmin: false,
+      },
+      orderBy: { createdAt: "desc" },
     });
-
-    if (!user || user.payment_status === "red") {
-      return res
-        .status(403)
-        .json({ message: "Pago inactivo. No puede autoevaluarse." });
+    if (!approvedRequest) {
+      return res.status(400).json({
+        message:
+          "No tienes ninguna evaluación aprobada. Solicita una evaluación y espera la aprobación del admin.",
+      });
     }
 
-    const lastSelfEval = await prisma.routineAssignment.findFirst({
-      where: { userId: Number(userId), selfEvaluated: true },
-      orderBy: { updatedAt: "desc" },
-    });
-
-    if (lastSelfEval) {
-      const dias =
-        (Date.now() - new Date(lastSelfEval.updatedAt).getTime()) /
-        (1000 * 60 * 60 * 24);
-      if (dias < 30) {
-        return res.status(403).json({
-          message: `Ya realizaste una autoevaluación hace menos de 30 días. Intenta en ${Math.ceil(
-            30 - dias
-          )} días.`,
-        });
-      }
-    }
-
-    const assignment = await prisma.routineAssignment.findFirst({
-      where: { userId: Number(userId), evaluated: true },
+    // 1) Obtener la última rutina evaluada por el admin
+    const lastAdminEval = await prisma.routineAssignment.findFirst({
+      where: {
+        userId: Number(userId),
+        evaluated: true,
+        selfEvaluated: false,
+      },
       orderBy: { createdAt: "desc" },
       include: { routine: true },
     });
+    if (!lastAdminEval) {
+      return res.status(404).json({
+        message: "No se encontró rutina evaluada por admin para autoevaluar.",
+      });
+    }
 
-    if (!assignment)
-      return res
-        .status(404)
-        .json({ message: "No se encontró rutina evaluada base" });
-
-    const fileUrl = assignment.customFile || assignment.routine!.fileUrl;
-    const filePath = path.resolve(
-      process.cwd(),
-      fileUrl.replace(/^\/public\//, "public/")
-    );
-
+    // 2) Resolver ruta al archivo
+    const fileUrl = lastAdminEval.customFile || lastAdminEval.routine!.fileUrl;
+    let filePath: string;
+    if (fileUrl.startsWith("evaluations/")) {
+      filePath = path.join(process.cwd(), "uploads", "routines", fileUrl);
+    } else {
+      filePath = path.join(
+        process.cwd(),
+        fileUrl.replace(/^\/public\//, "public/")
+      );
+    }
     if (!fs.existsSync(filePath)) {
       return res
         .status(404)
         .json({ message: "Archivo de rutina no encontrado" });
     }
 
+    // 3) Leer y escribir Excel
     const wb = xlsx.readFile(filePath);
-    const sheetName = wb.SheetNames[2];
-    const sh = wb.Sheets[sheetName];
+    const sh = wb.Sheets[wb.SheetNames[2]];
     const rows: any[][] = xlsx.utils.sheet_to_json(sh, {
       header: 1,
       defval: "",
     });
+    const percentageTable: Record<number, number> = {
+      1: 100,
+      2: 95,
+      3: 90,
+      4: 85,
+      5: 80,
+      6: 78,
+      7: 77,
+      8: 75,
+      9: 72,
+      10: 70,
+    };
+    const calculateRM = (peso: number, reps: number) => {
+      const pct = percentageTable[reps] || 69;
+      return Math.round((peso * 100) / pct);
+    };
 
     const rmCol: (number | string)[][] = [];
     for (let i = 6; i < rows.length; i++) {
       const nombreEj = (rows[i][1] || "").toString().trim().toLowerCase();
-      if (!nombreEj || nombreEj === "ejercicio" || nombreEj === "grupo") {
+      if (!nombreEj || ["ejercicio", "grupo"].includes(nombreEj)) {
         rmCol.push([""]);
         continue;
       }
-
       const match = ejercicios.find(
         (e: any) => e.ejercicio.toLowerCase().trim() === nombreEj
       );
-      if (match) {
-        rmCol.push([calculateRM(match.peso, match.reps)]);
-      } else {
-        rmCol.push([""]);
-      }
+      rmCol.push(match ? [calculateRM(match.peso, match.reps)] : [""]);
     }
-
     xlsx.utils.sheet_add_aoa(sh, rmCol, { origin: "C7" });
 
-    // Extra: Agregar nombre y edad al principio si existe
     if (nombre) sh["B2"] = { t: "s", v: nombre };
-    if (edad) sh["B4"] = { t: "s", v: `${edad}` };
     sh["B3"] = { t: "s", v: new Date().toLocaleDateString("es-AR") };
+    if (edad) sh["B4"] = { t: "s", v: `${edad}` };
 
+    // 4) Guardar archivo
     const evalName = `${userId}-${Date.now()}-self-evaluated.xlsx`;
     const saveDir = path.resolve(process.cwd(), "uploads/routines/evaluations");
     if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
     const savePath = path.join(saveDir, evalName);
     xlsx.writeFile(wb, savePath);
 
-    const nuevaRutina = await prisma.routineAssignment.create({
+    // 5) Registrar autoevaluación *con* routineBaseId y borrar la solicitud
+    await prisma.routineAssignment.create({
       data: {
         userId: Number(userId),
+        routineBaseId: lastAdminEval.routineBaseId, // ← aquí
         evaluated: true,
         selfEvaluated: true,
         customFile: `evaluations/${evalName}`,
       },
     });
+    await prisma.evaluationRequest.delete({
+      where: { id: approvedRequest.id },
+    });
 
-    res.json({
+    return res.json({
       message: "Autoevaluación completada con éxito",
       evaluatedFile: `evaluations/${evalName}`,
     });

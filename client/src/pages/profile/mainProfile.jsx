@@ -225,12 +225,18 @@ export default function MainProfile() {
                       <p className="text-md text-gray-600 dark:text-gray-400 mb-1">
                         Tipo: {routine.routine?.type || "-"}
                       </p>
-                      <p className="text-md text-gray-600 dark:text-gray-400 ">
-                        Autoevaluada:{" "}
-                        <span className="font-semibold">
-                          {routine.selfEvaluated ? "Sí" : "No"}
-                        </span>
-                      </p>
+
+                      <span
+                        className={`px-2 text-xs rounded ${
+                          routine?.selfEvaluated
+                            ? "bg-green-200"
+                            : "bg-blue-200"
+                        }`}
+                      >
+                        {routine?.selfEvaluated === true
+                          ? "Autoevaluada"
+                          : "Evaluada por Admin"}
+                      </span>
                     </div>
 
                     {/* Botón de descarga abajo a la derecha */}

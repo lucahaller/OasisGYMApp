@@ -114,11 +114,10 @@ export default function SelfEvaluationForm({ userId, name, age, requestId }) {
       });
 
       await axios.post(
-        `http://localhost:3000/routines/user/${userId}/evaluate`,
+        `http://localhost:3000/routines/user/${userId}/evaluate/self`,
         { ejercicios: data, nombre: name, edad: age },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setMessage("Evaluación enviada correctamente ✅");
     } catch (err) {
       console.error(err);
