@@ -235,7 +235,7 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
 
     // 2) Carga el archivo de Excel
     const filePath = lastBase.customFile
-      ? path.join(process.cwd(), "uploads/routines", lastBase.customFile)
+      ? path.join(process.cwd(), "uploads", "routines", lastBase.customFile)
       : path.join(
           process.cwd(),
           lastBase.routine!.fileUrl.replace(/^\/public\//, "public/")
@@ -248,7 +248,7 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
     const wb = xlsx.readFile(filePath);
     const sh = wb.Sheets[wb.SheetNames[2]]; // Hoja 3
 
-    // 3) Calcula y vuelca los RM en columna C empezando en fila 7
+    // 3) Calcula y vuela los RM en columna C empezando en fila 7
     const rows: any[][] = xlsx.utils.sheet_to_json(sh, {
       header: 1,
       defval: "",
@@ -284,10 +284,10 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
     }
     xlsx.utils.sheet_add_aoa(sh, rmCol, { origin: "C7" });
 
-    // 4) Inserta nombre, fecha y edad en celdas B2, B3, B4
-    if (nombre) sh["B2"] = { t: "s", v: nombre };
-    sh["B3"] = { t: "s", v: new Date().toLocaleDateString("es-AR") };
-    if (edad) sh["B4"] = { t: "s", v: `${edad}` };
+    // 4) Inserta nombre, fecha y edad en las celdas B1, B2, B3
+    if (nombre) sh["B1"] = { t: "s", v: nombre };
+    sh["B2"] = { t: "s", v: new Date().toLocaleDateString("es-AR") };
+    if (edad) sh["B3"] = { t: "n", v: Number(edad) };
 
     // 5) Guarda el nuevo archivo evaluado
     const evalName = `${userId}-${Date.now()}-admin-evaluated.xlsx`;
@@ -296,7 +296,7 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
     const savePath = path.join(saveDir, evalName);
     xlsx.writeFile(wb, savePath);
 
-    // 6) Crea un nuevo registro de evaluation para el admin
+    // 6) Crea un nuevo registro de routineAssignment para la evaluación del admin
     const adminAssignment = await prisma.routineAssignment.create({
       data: {
         userId: Number(userId),
@@ -307,7 +307,16 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
       },
     });
 
-    // 7) Limpia evaluaciones antiguas dejando solo las 2 más recientes
+    // 7) Elimina las solicitudes aprobadas ya consumidas
+    await prisma.evaluationRequest.deleteMany({
+      where: {
+        userId: Number(userId),
+        status: "aprobada",
+        evaluatedByAdmin: false,
+      },
+    });
+
+    // 8) Limpia evaluaciones antiguas dejando solo las 2 más recientes
     const toDelete = await prisma.routineAssignment.findMany({
       where: {
         userId: Number(userId),

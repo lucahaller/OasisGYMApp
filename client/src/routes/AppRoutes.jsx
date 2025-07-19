@@ -37,7 +37,7 @@ const AppRoutes = () => {
       <Route
         path="/profile"
         element={
-          <AuthGuard roleAllowed={["USER", "ADMIN"]}>
+          <AuthGuard roleAllowed={["USER"]}>
             <MainProfile />
           </AuthGuard>
         }
