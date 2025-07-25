@@ -192,7 +192,7 @@ export const saveAdminEvaluationProgress = async (
       evaluation = await prisma.evaluationRequest.create({
         data: {
           userId: Number(userId),
-          status: "aprobada", // ya viene aprobado
+          status: "pendiente", // ya viene aprobado
           data,
           evaluatedByAdmin: true, // aquí marcamos el flag
         },

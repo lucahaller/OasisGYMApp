@@ -311,8 +311,15 @@ export const evaluateUserRoutine = async (req: Request, res: Response) => {
     await prisma.evaluationRequest.deleteMany({
       where: {
         userId: Number(userId),
-        status: "aprobada",
-        evaluatedByAdmin: false,
+        OR: [
+          {
+            status: "pendiente",
+          },
+          {
+            status: "aprobada",
+            evaluatedByAdmin: false,
+          },
+        ],
       },
     });
 

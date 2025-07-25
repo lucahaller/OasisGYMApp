@@ -191,8 +191,8 @@ export default function MainAdmin() {
                         <p className="inline-block">
                           {user.payment_status === "verde"
                             ? "Activo"
-                            : user.payment_status === "Amarillo"
-                            ? "Activo (Pronto a vencer)"
+                            : user.payment_status === "amarillo"
+                            ? "Activo (Por vencer)"
                             : "Inactivo"}
                         </p>
                       </td>

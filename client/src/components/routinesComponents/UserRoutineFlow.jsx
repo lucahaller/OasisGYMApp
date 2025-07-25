@@ -3,7 +3,7 @@ import axios from "axios";
 import AssignRoutine from "./AssignRoutine";
 import EvaluationForm from "./EvaluationForm";
 import DownloadEvaluatedRoutine from "../../pages/profile/DownloadEvaluatedRoutine";
-
+import { MdAssignmentAdd } from "react-icons/md";
 export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
   const [estado, setEstado] = useState("loading");
   const [showAssign, setShowAssign] = useState(false);
@@ -51,20 +51,20 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
       </p>
     );
   }
-
+  console.log(paymentStatus);
   return (
     <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 p-6 rounded-lg shadow mt-6 text-sm text-gray-800 dark:text-gray-200">
       {/* No asignada */}
       {estado === "no-assigned" && (
         <>
           <p className="mb-3">El usuario no tiene una rutina asignada.</p>
-          {paymentStatus === "verde" ? (
+          {paymentStatus === "verde" || paymentStatus === "amarillo" ? (
             !showAssign ? (
               <button
                 onClick={() => setShowAssign(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition"
+                className="bg-blue-600 flex flex-row gap-2 justify-center items-center hover:bg-blue-700 text-white px-4 py-2 rounded-md transition"
               >
-                Asignar rutina
+                <MdAssignmentAdd className="text-md" /> Asignar rutina
               </button>
             ) : (
               <AssignRoutine userId={userId} setShowAssign={setShowAssign} />
@@ -149,13 +149,13 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
           )}
 
           {/* Botón Asignar nueva */}
-          {paymentStatus === "verde" ? (
+          {paymentStatus === "verde" || paymentStatus === "amarillo" ? (
             !showAssign ? (
               <button
                 onClick={() => setShowAssign(true)}
-                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition"
+                className="bg-blue-600 flex flex-row gap-2 justify-center items-center hover:bg-blue-700 text-white px-4 py-2 rounded-md transition"
               >
-                Asignar nueva rutina
+                <MdAssignmentAdd className="text-md" /> Asignar rutina
               </button>
             ) : (
               <AssignRoutine userId={userId} setShowAssign={setShowAssign} />

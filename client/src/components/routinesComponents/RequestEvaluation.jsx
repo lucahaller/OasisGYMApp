@@ -39,7 +39,7 @@ export default function RequestEvaluation({ userId, children }) {
   useEffect(() => {
     fetchRequestStatus();
   }, []);
-
+  console.log(request);
   if (!request) {
     return (
       <div className="space-y-4">

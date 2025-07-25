@@ -259,20 +259,46 @@ export default function MainProfile() {
         {tab === "evaluacion" && (
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md mt-6">
             <RequestEvaluation userId={profile.id}>
-              {(request) =>
-                request.status === "aprobada" ? (
-                  <SelfEvaluationForm
-                    userId={profile.id}
-                    age={profile.age}
-                    name={profile.name}
-                    requestId={request.id}
-                  />
-                ) : (
-                  <p className="text-sm text-yellow-600">
-                    Tu solicitud está pendiente de aprobación.
-                  </p>
-                )
-              }
+              {(request) => {
+                if (!request) {
+                  return (
+                    <div>
+                      <p>No tenés solicitudes activas.</p>
+                      <button onClick={handleRequest}>
+                        Solicitar Evaluación
+                      </button>
+                    </div>
+                  );
+                }
+
+                if (request.status === "aprobada") {
+                  return (
+                    <SelfEvaluationForm
+                      userId={profile.id}
+                      age={profile.age}
+                      name={profile.name}
+                      requestId={request.id}
+                    />
+                  );
+                }
+
+                if (request.status === "pendiente") {
+                  return (
+                    <p className="text-sm text-yellow-600">
+                      Tu solicitud está pendiente de aprobación.
+                    </p>
+                  );
+                }
+
+                return (
+                  <div>
+                    <p>Tu solicitud fue rechazada.</p>
+                    <button onClick={handleRequest}>
+                      Solicitar nuevamente
+                    </button>
+                  </div>
+                );
+              }}
             </RequestEvaluation>
           </div>
         )}
