@@ -141,75 +141,77 @@ export default function MainAdmin() {
             />
 
             <div className="relative overflow-x-auto shadow-md sm:rounded-lg bg-white dark:bg-gray-800">
-              <table className="w-full text-sm text-left text-gray-500 dark:text-gray-300">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-300">
-                  <tr>
-                    <th className="px-6 py-3">Nombre</th>
-                    <th className="px-6 py-3">Email</th>
-                    <th className="px-6 py-3">Edad</th>
-                    <th className="px-6 py-3">Altura</th>
-                    <th className="px-6 py-3">Peso</th>
-                    <th className="px-6 py-3">Último pago</th>
-                    <th className="px-6 py-3">Estado</th>
-                    <th className="px-6 py-3 text-center">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users?.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                        {user.name}
-                      </td>
-                      <td className="px-6 py-4">{user.email}</td>
-                      <td className="px-6 py-4">{user.age || "-"}</td>
-                      <td className="px-6 py-4">
-                        {user.height ? `${user.height} cm` : "-"}
-                      </td>
-                      <td className="px-6 py-4">
-                        {user.weight ? `${user.weight} kg` : "-"}
-                      </td>
-                      <td className="px-6 py-4">
-                        {user.last_payment
-                          ? new Date(user.last_payment).toLocaleDateString(
-                              "es-AR"
-                            )
-                          : "Sin pago"}
-                      </td>
-                      <td className="px-6 py-4 flex flex-row gap-2 items-center">
-                        <div
-                          className={`w-3 h-3 rounded-full inline-block ${
-                            user.payment_status === "verde"
-                              ? "bg-green-400"
-                              : user.payment_status === "amarillo"
-                              ? "bg-yellow-400"
-                              : "bg-red-500"
-                          }`}
-                        ></div>
-                        <p className="inline-block">
-                          {user.payment_status === "verde"
-                            ? "Activo"
-                            : user.payment_status === "amarillo"
-                            ? "Activo (Por vencer)"
-                            : "Inactivo"}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={() =>
-                            navigate(`/dashboard/users/${user.id}`)
-                          }
-                          className="text-cyan-600 hover:text-cyan-700 font-semibold text-sm"
-                        >
-                          Ver usuario
-                        </button>
-                      </td>
+              <div className="max-h-screen overflow-y-auto">
+                <table className="w-full text-sm text-left text-gray-500 dark:text-gray-300">
+                  <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-300">
+                    <tr>
+                      <th className="px-6 py-3">Nombre</th>
+                      <th className="px-6 py-3">Email</th>
+                      <th className="px-6 py-3">Edad</th>
+                      <th className="px-6 py-3">Altura</th>
+                      <th className="px-6 py-3">Peso</th>
+                      <th className="px-6 py-3">Último pago</th>
+                      <th className="px-6 py-3">Estado</th>
+                      <th className="px-6 py-3 text-center">Acciones</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {users?.map((user) => (
+                      <tr
+                        key={user.id}
+                        className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                          {user.name}
+                        </td>
+                        <td className="px-6 py-4">{user.email}</td>
+                        <td className="px-6 py-4">{user.age || "-"}</td>
+                        <td className="px-6 py-4">
+                          {user.height ? `${user.height} cm` : "-"}
+                        </td>
+                        <td className="px-6 py-4">
+                          {user.weight ? `${user.weight} kg` : "-"}
+                        </td>
+                        <td className="px-6 py-4">
+                          {user.last_payment
+                            ? new Date(user.last_payment).toLocaleDateString(
+                                "es-AR"
+                              )
+                            : "Sin pago"}
+                        </td>
+                        <td className="px-6 py-4 flex flex-row gap-2 items-center">
+                          <div
+                            className={`w-3 h-3 rounded-full inline-block ${
+                              user.payment_status === "verde"
+                                ? "bg-green-400"
+                                : user.payment_status === "amarillo"
+                                ? "bg-yellow-400"
+                                : "bg-red-500"
+                            }`}
+                          ></div>
+                          <p className="inline-block">
+                            {user.payment_status === "verde"
+                              ? "Activo"
+                              : user.payment_status === "amarillo"
+                              ? "Activo (Por vencer)"
+                              : "Inactivo"}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <button
+                            onClick={() =>
+                              navigate(`/dashboard/users/${user.id}`)
+                            }
+                            className="text-cyan-600 hover:text-cyan-700 font-semibold text-sm"
+                          >
+                            Ver usuario
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         ) : (

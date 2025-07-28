@@ -126,6 +126,7 @@ export default function EvaluationForm({ userId, name, age }) {
       );
 
       setMessage("Evaluación enviada correctamente ✅");
+      window.location.reload();
     } catch (err) {
       console.error("Error al enviar evaluación:", err);
       setMessage("Error al enviar la evaluación ❌");

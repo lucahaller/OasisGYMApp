@@ -51,7 +51,7 @@ export default function UserRoutineFlow({ userId, paymentStatus, name, age }) {
       </p>
     );
   }
-  console.log(paymentStatus);
+
   return (
     <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 p-6 rounded-lg shadow mt-6 text-sm text-gray-800 dark:text-gray-200">
       {/* No asignada */}
